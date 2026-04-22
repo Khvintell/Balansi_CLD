@@ -1,0 +1,19 @@
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# SQLite
+*.db
+*.sqlite
+# Optional: if you want to keep recipes.db in git, remove or comment the above lines. 
+# We'll ignore the db journal just in case
+*.sqlite3-journal
