@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, Modal, Animated, StyleSheet } , Platform } from 'react-native';
+import { View, Text, TouchableOpacity, Modal, Animated, StyleSheet , Platform } from 'react-native';
 
 const C = {
   success:     '#10B981',
