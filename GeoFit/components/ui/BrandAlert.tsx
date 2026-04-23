@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, Modal, Animated, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, Modal, Animated, StyleSheet } , Platform } from 'react-native';
 
 const C = {
   success:     '#10B981',
@@ -33,8 +33,8 @@ export const BrandAlert: React.FC<BrandAlertProps> = ({ state, onClose }) => {
   useEffect(() => {
     if (state.visible) {
       Animated.parallel([
-        Animated.spring(sc, { toValue: 1, useNativeDriver: true, speed: 26, bounciness: 11 }),
-        Animated.timing(op, { toValue: 1, duration: 200, useNativeDriver: true }),
+        Animated.spring(sc, { toValue: 1, useNativeDriver: Platform.OS !== 'web', speed: 26, bounciness: 11 }),
+        Animated.timing(op, { toValue: 1, duration: 200, useNativeDriver: Platform.OS !== 'web' }),
       ]).start();
     } else {
       sc.setValue(0.82);

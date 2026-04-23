@@ -40,8 +40,8 @@ const haptic = (type: 'select' | 'medium' | 'heavy' | 'success' | 'warning') => 
 
 const springBounce = (anim: Animated.Value, toValue: number, cb?: () => void) =>
   Animated.sequence([
-    Animated.spring(anim, { toValue: toValue * 1.35, useNativeDriver: true, speed: 60, bounciness: 20 }),
-    Animated.spring(anim, { toValue: 1, useNativeDriver: true, speed: 60 }),
+    Animated.spring(anim, { toValue: toValue * 1.35, useNativeDriver: Platform.OS !== 'web', speed: 60, bounciness: 20 }),
+    Animated.spring(anim, { toValue: 1, useNativeDriver: Platform.OS !== 'web', speed: 60 }),
   ]).start(cb);
 
 const Tap = ({ children, onPress, style, scale = 0.95 }: any) => {
@@ -51,8 +51,8 @@ const Tap = ({ children, onPress, style, scale = 0.95 }: any) => {
       <TouchableOpacity
         activeOpacity={1}
         style={{ width: '100%' }}
-        onPressIn={() => Animated.spring(a, { toValue: scale, useNativeDriver: true, speed: 50 }).start()}
-        onPressOut={() => Animated.spring(a, { toValue: 1, useNativeDriver: true, speed: 50 }).start()}
+        onPressIn={() => Animated.spring(a, { toValue: scale, useNativeDriver: Platform.OS !== 'web', speed: 50 }).start()}
+        onPressOut={() => Animated.spring(a, { toValue: 1, useNativeDriver: Platform.OS !== 'web', speed: 50 }).start()}
         onPress={onPress}
       >
         {children}
@@ -73,8 +73,8 @@ const BrandAlert = ({ state, onClose, DS, AL }: { state: BAlertState; onClose: (
   useEffect(() => {
     if (state.visible) {
       Animated.parallel([
-        Animated.spring(slideY, { toValue: 0, tension: 65, friction: 11, useNativeDriver: true }),
-        Animated.timing(op, { toValue: 1, duration: 220, useNativeDriver: true }),
+        Animated.spring(slideY, { toValue: 0, tension: 65, friction: 11, useNativeDriver: Platform.OS !== 'web' }),
+        Animated.timing(op, { toValue: 1, duration: 220, useNativeDriver: Platform.OS !== 'web' }),
       ]).start();
     } else {
       slideY.setValue(60); op.setValue(0);
@@ -185,8 +185,8 @@ const StepCard = ({ step, text, delay, ST, DS }: { step: number; text: string; d
   const op = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(tx, { toValue: 0, duration: 380, delay, easing: Easing.out(Easing.quad), useNativeDriver: true }),
-      Animated.timing(op, { toValue: 1, duration: 380, delay, useNativeDriver: true }),
+      Animated.timing(tx, { toValue: 0, duration: 380, delay, easing: Easing.out(Easing.quad), useNativeDriver: Platform.OS !== 'web' }),
+      Animated.timing(op, { toValue: 1, duration: 380, delay, useNativeDriver: Platform.OS !== 'web' }),
     ]).start();
   }, [delay, op, tx]);
   return (
@@ -211,8 +211,8 @@ const IngRow = ({ name, amount, idx, isLast, IR, DS }: any) => {
   const ty = useRef(new Animated.Value(6)).current;
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(op, { toValue: 1, duration: 260, delay: idx * 40, useNativeDriver: true }),
-      Animated.timing(ty, { toValue: 0, duration: 260, delay: idx * 40, useNativeDriver: true }),
+      Animated.timing(op, { toValue: 1, duration: 260, delay: idx * 40, useNativeDriver: Platform.OS !== 'web' }),
+      Animated.timing(ty, { toValue: 0, duration: 260, delay: idx * 40, useNativeDriver: Platform.OS !== 'web' }),
     ]).start();
   }, [idx, op, ty]);
   return (
@@ -299,7 +299,7 @@ export default function RecipeDetailsScreen() {
     }
     Animated.spring(barSlide, {
       toValue: 0, tension: 60, friction: 11,
-      delay: 700, useNativeDriver: true,
+      delay: 700, useNativeDriver: Platform.OS !== 'web',
     }).start();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [safeId]);
@@ -381,8 +381,8 @@ export default function RecipeDetailsScreen() {
   const logMeal = async () => {
     haptic('heavy');
     Animated.sequence([
-      Animated.spring(btnAnim, { toValue: 0.93, useNativeDriver: true, speed: 80 }),
-      Animated.spring(btnAnim, { toValue: 1, useNativeDriver: true, speed: 80 }),
+      Animated.spring(btnAnim, { toValue: 0.93, useNativeDriver: Platform.OS !== 'web', speed: 80 }),
+      Animated.spring(btnAnim, { toValue: 1, useNativeDriver: Platform.OS !== 'web', speed: 80 }),
     ]).start();
     setAddingMeal(true);
     try {
@@ -463,7 +463,7 @@ export default function RecipeDetailsScreen() {
     haptic('select');
     setActiveTab(tab);
     Animated.spring(tabSlide, {
-      toValue: i * TAB_W, useNativeDriver: true, speed: 26, bounciness: 4,
+      toValue: i * TAB_W, useNativeDriver: Platform.OS !== 'web', speed: 26, bounciness: 4,
     }).start();
   };
 

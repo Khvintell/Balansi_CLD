@@ -119,8 +119,8 @@ function CartRow({ item, onToggle, onIncrement, onDecrement, onDelete, S, C }: C
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const cat = getCat(item.category);
 
-  const pressIn  = useCallback(() => Animated.spring(scaleAnim, { toValue: 0.97, useNativeDriver: true }).start(), []);
-  const pressOut = useCallback(() => Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true }).start(), []);
+  const pressIn  = useCallback(() => Animated.spring(scaleAnim, { toValue: 0.97, useNativeDriver: Platform.OS !== 'web' }).start(), []);
+  const pressOut = useCallback(() => Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: Platform.OS !== 'web' }).start(), []);
 
   return (
     <Animated.View style={[{ transform: [{ scale: scaleAnim }] }, S.rowWrap, item.checked && S.rowWrapChecked]}>

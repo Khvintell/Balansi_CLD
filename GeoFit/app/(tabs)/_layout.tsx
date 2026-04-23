@@ -17,18 +17,18 @@ const ScanButton = ({ children, onPress, C, themeId }: any) => {
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
-        Animated.timing(pulseAnim, { toValue: 1.05, duration: 1800, useNativeDriver: true }),
-        Animated.timing(pulseAnim, { toValue: 1, duration: 1800, useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 1.05, duration: 1800, useNativeDriver: Platform.OS !== 'web' }),
+        Animated.timing(pulseAnim, { toValue: 1, duration: 1800, useNativeDriver: Platform.OS !== 'web' }),
       ])
     ).start();
   }, []);
 
   const handlePressIn = () => {
-    Animated.spring(scaleAnim, { toValue: 0.92, friction: 4, tension: 60, useNativeDriver: true }).start();
+    Animated.spring(scaleAnim, { toValue: 0.92, friction: 4, tension: 60, useNativeDriver: Platform.OS !== 'web' }).start();
   };
 
   const handlePressOut = () => {
-    Animated.spring(scaleAnim, { toValue: 1, friction: 3, tension: 40, useNativeDriver: true }).start();
+    Animated.spring(scaleAnim, { toValue: 1, friction: 3, tension: 40, useNativeDriver: Platform.OS !== 'web' }).start();
   };
 
   // 🚀 დინამიური ფერები FAB-სთვის

@@ -41,8 +41,8 @@ export const WeightVerificationModal = ({
   useEffect(() => {
     if (showWeightModal || showVerifyModal) {
       Animated.parallel([
-        Animated.spring(scaleAnim, { toValue: 1, friction: 8, useNativeDriver: true }),
-        Animated.timing(opacityAnim, { toValue: 1, duration: 250, useNativeDriver: true })
+        Animated.spring(scaleAnim, { toValue: 1, friction: 8, useNativeDriver: Platform.OS !== 'web' }),
+        Animated.timing(opacityAnim, { toValue: 1, duration: 250, useNativeDriver: Platform.OS !== 'web' })
       ]).start();
     } else {
       scaleAnim.setValue(0.9);

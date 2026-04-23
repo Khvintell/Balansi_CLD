@@ -212,7 +212,7 @@ const HeroStatsRow = React.memo(({ consumed, target, tip, C, T, onTipPress, onCa
   useEffect(() => {
     if (tipRef.current !== tip) {
       tipFade.setValue(0);
-      Animated.timing(tipFade, { toValue: 1, duration: 280, useNativeDriver: true }).start();
+      Animated.timing(tipFade, { toValue: 1, duration: 280, useNativeDriver: Platform.OS !== 'web' }).start();
       tipRef.current = tip;
     }
   }, [tip]);
@@ -384,8 +384,8 @@ const SkeletonPulse = ({ style, T }: { style?: any; T: any }) => {
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
-        Animated.timing(anim, { toValue: 1, duration: 800, useNativeDriver: true }),
-        Animated.timing(anim, { toValue: 0.4, duration: 800, useNativeDriver: true }),
+        Animated.timing(anim, { toValue: 1, duration: 800, useNativeDriver: Platform.OS !== 'web' }),
+        Animated.timing(anim, { toValue: 0.4, duration: 800, useNativeDriver: Platform.OS !== 'web' }),
       ])
     ).start();
   }, []);
@@ -529,8 +529,8 @@ export default function HomeScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const scale = getHeartScale(recipeId);
     Animated.sequence([
-      Animated.spring(scale, { toValue: 1.4, useNativeDriver: true, speed: 50, bounciness: 20 }),
-      Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 50 }),
+      Animated.spring(scale, { toValue: 1.4, useNativeDriver: Platform.OS !== 'web', speed: 50, bounciness: 20 }),
+      Animated.spring(scale, { toValue: 1, useNativeDriver: Platform.OS !== 'web', speed: 50 }),
     ]).start();
     try {
       const updated = favorites.includes(recipeId) ? favorites.filter(id => id !== recipeId) : [...favorites, recipeId];
@@ -860,7 +860,7 @@ export default function HomeScreen() {
       <Animated.ScrollView
         ref={mainScrollRef}
         showsVerticalScrollIndicator={false}
-        onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}
+        onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: Platform.OS !== 'web' })}
         scrollEventThrottle={16}
         stickyHeaderIndices={[1]}
         contentContainerStyle={{

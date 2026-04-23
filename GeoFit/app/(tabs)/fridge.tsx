@@ -165,8 +165,8 @@ export default function FridgeScreen() {
   useEffect(() => {
     startLaser();
     Animated.loop(Animated.sequence([
-      Animated.timing(pulseAnim, { toValue: 1.1, duration: 1200, useNativeDriver: true }),
-      Animated.timing(pulseAnim, { toValue: 1, duration: 1200, useNativeDriver: true }),
+      Animated.timing(pulseAnim, { toValue: 1.1, duration: 1200, useNativeDriver: Platform.OS !== 'web' }),
+      Animated.timing(pulseAnim, { toValue: 1, duration: 1200, useNativeDriver: Platform.OS !== 'web' }),
     ])).start();
   }, []);
 
@@ -261,8 +261,8 @@ export default function FridgeScreen() {
 
   const startLaser = () => {
     Animated.loop(Animated.sequence([
-      Animated.timing(laserAnim, { toValue: FRAME_H - 4, duration: 2500, useNativeDriver: true }),
-      Animated.timing(laserAnim, { toValue: 0, duration: 2500, useNativeDriver: true }),
+      Animated.timing(laserAnim, { toValue: FRAME_H - 4, duration: 2500, useNativeDriver: Platform.OS !== 'web' }),
+      Animated.timing(laserAnim, { toValue: 0, duration: 2500, useNativeDriver: Platform.OS !== 'web' }),
     ])).start();
   };
 
@@ -275,9 +275,9 @@ export default function FridgeScreen() {
 
   const retakePhoto = () => {
     Haptics.selectionAsync(); isCancelledRef.current = true; setIsScanning(false);
-    Animated.timing(resultSheetAnim, { toValue: SH, duration: 300, useNativeDriver: true }).start(() => {
+    Animated.timing(resultSheetAnim, { toValue: SH, duration: 300, useNativeDriver: Platform.OS !== 'web' }).start(() => {
       setDetectedItems(null); setCapturedPhoto(null);
-      Animated.timing(laserOpacity, { toValue: 1, duration: 300, useNativeDriver: true }).start();
+      Animated.timing(laserOpacity, { toValue: 1, duration: 300, useNativeDriver: Platform.OS !== 'web' }).start();
     });
   };
 
@@ -295,7 +295,7 @@ export default function FridgeScreen() {
       if (data.success && data.ingredients.length > 0) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         setDetectedItems(data.ingredients);
-        Animated.spring(resultSheetAnim, { toValue: 0, useNativeDriver: true, tension: 50, friction: 8 }).start();
+        Animated.spring(resultSheetAnim, { toValue: 0, useNativeDriver: Platform.OS !== 'web', tension: 50, friction: 8 }).start();
       } else {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         Alert.alert('ვერ ვიცანი 🧐', data.message || 'საჭმელი ვერ ვიპოვე.', [{ text: 'თავიდან ცდა', onPress: retakePhoto }]);
@@ -311,15 +311,15 @@ export default function FridgeScreen() {
     if (!cameraRef.current || isScanning) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     Animated.sequence([
-      Animated.timing(flashAnim, { toValue: 1, duration: 50, useNativeDriver: true }),
-      Animated.timing(flashAnim, { toValue: 0, duration: 300, useNativeDriver: true })
+      Animated.timing(flashAnim, { toValue: 1, duration: 50, useNativeDriver: Platform.OS !== 'web' }),
+      Animated.timing(flashAnim, { toValue: 0, duration: 300, useNativeDriver: Platform.OS !== 'web' })
     ]).start();
-    Animated.timing(laserOpacity, { toValue: 0, duration: 200, useNativeDriver: true }).start();
+    Animated.timing(laserOpacity, { toValue: 0, duration: 200, useNativeDriver: Platform.OS !== 'web' }).start();
     try {
       const photo = await cameraRef.current.takePictureAsync({ quality: 0.3, skipProcessing: true });
       if (photo?.uri) processImage(photo.uri);
     } catch {
-      Animated.timing(laserOpacity, { toValue: 1, duration: 300, useNativeDriver: true }).start();
+      Animated.timing(laserOpacity, { toValue: 1, duration: 300, useNativeDriver: Platform.OS !== 'web' }).start();
     }
   };
 
@@ -332,7 +332,7 @@ export default function FridgeScreen() {
       quality: 0.5,
     });
     if (!result.canceled && result.assets[0].uri) {
-      Animated.timing(laserOpacity, { toValue: 0, duration: 200, useNativeDriver: true }).start();
+      Animated.timing(laserOpacity, { toValue: 0, duration: 200, useNativeDriver: Platform.OS !== 'web' }).start();
       processImage(result.assets[0].uri);
     }
   };

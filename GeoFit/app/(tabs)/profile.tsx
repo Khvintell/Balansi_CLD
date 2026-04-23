@@ -104,14 +104,14 @@ export default function ProfileScreen() {
   const { isVerifying, setIsVerifying, handleWeightSave } = useWeightManager(profile, setProfile);
 
   useEffect(() => {
-    Animated.loop(Animated.timing(waveAnim, { toValue: 1, duration: 4000, useNativeDriver: true })).start();
-    Animated.loop(Animated.timing(waveAnim2, { toValue: 1, duration: 7000, useNativeDriver: true })).start();
+    Animated.loop(Animated.timing(waveAnim, { toValue: 1, duration: 4000, useNativeDriver: Platform.OS !== 'web' })).start();
+    Animated.loop(Animated.timing(waveAnim2, { toValue: 1, duration: 7000, useNativeDriver: Platform.OS !== 'web' })).start();
   }, []);
 
   const triggerPop = (visible: boolean) => {
     if (visible) {
       popAnim.setValue(0);
-      Animated.spring(popAnim, { toValue: 1, friction: 8, useNativeDriver: true }).start();
+      Animated.spring(popAnim, { toValue: 1, friction: 8, useNativeDriver: Platform.OS !== 'web' }).start();
     }
   };
 

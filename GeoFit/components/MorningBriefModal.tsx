@@ -24,13 +24,13 @@ export const MorningBriefModal = ({ visible, onClose }: MorningBriefModalProps) 
         toValue: 0,
         tension: 50,
         friction: 8,
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== 'web',
       }).start();
     } else {
       Animated.timing(slideAnim, {
         toValue: SH,
         duration: 300,
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== 'web',
       }).start();
     }
   }, [visible]);

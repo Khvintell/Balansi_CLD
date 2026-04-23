@@ -48,7 +48,7 @@ export const ProfileHeroCard: React.FC<Props> = ({
         toValue: 1,
         duration: 6000,
         easing: Easing.linear,
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== 'web',
       })
     ).start();
   }, []);
@@ -57,15 +57,15 @@ export const ProfileHeroCard: React.FC<Props> = ({
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
-        Animated.timing(streakPulse, { toValue: 1.08, duration: 900, useNativeDriver: true }),
-        Animated.timing(streakPulse, { toValue: 1, duration: 900, useNativeDriver: true }),
+        Animated.timing(streakPulse, { toValue: 1.08, duration: 900, useNativeDriver: Platform.OS !== 'web' }),
+        Animated.timing(streakPulse, { toValue: 1, duration: 900, useNativeDriver: Platform.OS !== 'web' }),
       ])
     ).start();
   }, []);
 
   // Entrance
   useEffect(() => {
-    Animated.spring(heroScale, { toValue: 1, useNativeDriver: true, friction: 7 }).start();
+    Animated.spring(heroScale, { toValue: 1, useNativeDriver: Platform.OS !== 'web', friction: 7 }).start();
   }, []);
 
   const rotation = rotateAnim.interpolate({

@@ -175,15 +175,15 @@ export default function ScannerScreen() {
 
   const startLaser = () => {
     Animated.loop(Animated.sequence([
-      Animated.timing(laserAnim, { toValue: FRAME_SIZE - 4, duration: 2000, useNativeDriver: true }),
-      Animated.timing(laserAnim, { toValue: 0, duration: 2000, useNativeDriver: true }),
+      Animated.timing(laserAnim, { toValue: FRAME_SIZE - 4, duration: 2000, useNativeDriver: Platform.OS !== 'web' }),
+      Animated.timing(laserAnim, { toValue: 0, duration: 2000, useNativeDriver: Platform.OS !== 'web' }),
     ])).start();
   };
 
   const startPulse = () => {
     Animated.loop(Animated.sequence([
-      Animated.timing(pulseAnim, { toValue: 1.15, duration: 1000, useNativeDriver: true }),
-      Animated.timing(pulseAnim, { toValue: 1, duration: 1000, useNativeDriver: true }),
+      Animated.timing(pulseAnim, { toValue: 1.15, duration: 1000, useNativeDriver: Platform.OS !== 'web' }),
+      Animated.timing(pulseAnim, { toValue: 1, duration: 1000, useNativeDriver: Platform.OS !== 'web' }),
     ])).start();
   };
 
@@ -199,17 +199,17 @@ export default function ScannerScreen() {
     }
 
     Animated.sequence([
-      Animated.timing(flashAnim, { toValue: 1, duration: 50, useNativeDriver: true }),
-      Animated.timing(flashAnim, { toValue: 0, duration: 300, useNativeDriver: true })
+      Animated.timing(flashAnim, { toValue: 1, duration: 50, useNativeDriver: Platform.OS !== 'web' }),
+      Animated.timing(flashAnim, { toValue: 0, duration: 300, useNativeDriver: Platform.OS !== 'web' })
     ]).start();
-    Animated.timing(laserOpacity, { toValue: 0, duration: 200, useNativeDriver: true }).start();
+    Animated.timing(laserOpacity, { toValue: 0, duration: 200, useNativeDriver: Platform.OS !== 'web' }).start();
 
     try {
       const photo = await cameraRef.current.takePictureAsync({ quality: 0.3, skipProcessing: true }); 
       if (photo?.uri) processImage(photo.uri);
     } catch (error) {
       Alert.alert('შეცდომა', 'ფოტოს გადაღება ვერ მოხერხდა.');
-      Animated.timing(laserOpacity, { toValue: 1, duration: 300, useNativeDriver: true }).start();
+      Animated.timing(laserOpacity, { toValue: 1, duration: 300, useNativeDriver: Platform.OS !== 'web' }).start();
     }
   };
 
@@ -226,7 +226,7 @@ export default function ScannerScreen() {
       mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: true, aspect: [1, 1], quality: 0.5,
     });
     if (!result.canceled && result.assets[0].uri) {
-      Animated.timing(laserOpacity, { toValue: 0, duration: 200, useNativeDriver: true }).start();
+      Animated.timing(laserOpacity, { toValue: 0, duration: 200, useNativeDriver: Platform.OS !== 'web' }).start();
       processImage(result.assets[0].uri);
     }
   };
@@ -263,8 +263,8 @@ export default function ScannerScreen() {
         await incrementScanCount();
 
         Animated.sequence([
-          Animated.spring(resultSheetAnim, { toValue: 0, useNativeDriver: true, tension: 40, friction: 8 }),
-          Animated.timing(contentFadeAnim, { toValue: 1, duration: 400, useNativeDriver: true })
+          Animated.spring(resultSheetAnim, { toValue: 0, useNativeDriver: Platform.OS !== 'web', tension: 40, friction: 8 }),
+          Animated.timing(contentFadeAnim, { toValue: 1, duration: 400, useNativeDriver: Platform.OS !== 'web' })
         ]).start();
 
       } else {
@@ -284,10 +284,10 @@ export default function ScannerScreen() {
     Haptics.selectionAsync();
     isCancelledRef.current = true;
     setIsScanning(false); 
-    Animated.timing(resultSheetAnim, { toValue: H, duration: 300, useNativeDriver: true }).start(() => {
+    Animated.timing(resultSheetAnim, { toValue: H, duration: 300, useNativeDriver: Platform.OS !== 'web' }).start(() => {
       setResultData(null);
       setCapturedPhoto(null);
-      Animated.timing(laserOpacity, { toValue: 1, duration: 300, useNativeDriver: true }).start();
+      Animated.timing(laserOpacity, { toValue: 1, duration: 300, useNativeDriver: Platform.OS !== 'web' }).start();
     });
   };
 
