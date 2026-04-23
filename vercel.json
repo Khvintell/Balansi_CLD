@@ -1,0 +1,7 @@
+{
+  "buildCommand": "cd GeoFit && npm install && npx expo export --platform web",
+  "outputDirectory": "GeoFit/dist",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/$1" }
+  ]
+}
