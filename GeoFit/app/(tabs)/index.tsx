@@ -864,7 +864,7 @@ export default function HomeScreen() {
         scrollEventThrottle={16}
         stickyHeaderIndices={[1]}
         contentContainerStyle={{
-          paddingBottom: Platform.OS === 'ios' ? 120 : 100,
+          paddingBottom: 150,
           flexGrow: 1,
         }}
         refreshControl={

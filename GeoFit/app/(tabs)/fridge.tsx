@@ -540,7 +540,7 @@ export default function FridgeScreen() {
         {activeTab === 'ingredients' ? (
           <View style={{ flex: 1 }}>
             <View style={S.searchWrap}><View style={S.searchBox}><Search size={18} color={C.inkFaint} /><TextInput style={S.searchInput} placeholder="ძებნა..." placeholderTextColor={C.inkFaint} value={ingredientSearch} onChangeText={setIngredientSearch} />{ingredientSearch.length > 0 && (<TouchableOpacity onPress={() => setIngredientSearch('')}><X size={18} color={C.inkLight} /></TouchableOpacity>)}</View></View>
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 100 }} keyboardShouldPersistTaps="handled">
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 150 }} keyboardShouldPersistTaps="handled">
               {INGREDIENTS_DATA(C).map((section, idx) => {
                 const filteredData = section.data.filter(ing =>
                   ing.toLowerCase().includes(ingredientSearch.toLowerCase())
@@ -616,7 +616,7 @@ export default function FridgeScreen() {
           <FlatList
             data={matchedRecipes}
             keyExtractor={(item) => String(item.id)}
-            contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 120 }}
+            contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 150 }}
             showsVerticalScrollIndicator={false}
             ListEmptyComponent={<View style={S.emptyResults}><ChefHat size={50} color={C.border} /><Text style={S.emptyResultsTitle}>რეცეპტები არ მოიძებნა</Text><Text style={S.emptyResultsSub}>დაამატე მეტი ინგრედიენტი სიიდან ან გამოიყენე AI მაცივრის სკანერი.</Text></View>}
             renderItem={renderRecipeItem}

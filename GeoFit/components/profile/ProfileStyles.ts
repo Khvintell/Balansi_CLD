@@ -6,7 +6,7 @@ export const getProfileStyles = (C: any, TOP: number, BOTTOM: number) => StyleSh
   // Main Profile Styles
   root: { flex: 1, backgroundColor: C.bg },
   scroll: { flex: 1 },
-  scrollContent: { paddingBottom: BOTTOM + 32 },
+  scrollContent: { paddingBottom: BOTTOM + 120 },
   header: { 
     flexDirection: 'row', 
     alignItems: 'center', 
