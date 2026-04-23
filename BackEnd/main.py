@@ -23,10 +23,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from urllib.parse import unquote
+
+class UnicodeStaticFiles(StaticFiles):
+    """Custom StaticFiles handler to ensure Georgian characters are correctly decoded on Windows."""
+    def lookup_path(self, path: str):
+        return super().lookup_path(unquote(path))
+
 if not os.path.exists(ASSETS_DIR):
     os.makedirs(ASSETS_DIR)
 
-app.mount("/assets", StaticFiles(directory=ASSETS_DIR), name="assets")
+app.mount("/assets", UnicodeStaticFiles(directory=ASSETS_DIR), name="assets")
 
 app.include_router(api_router)
 

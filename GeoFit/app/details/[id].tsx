@@ -13,6 +13,7 @@ import { useDiaryStore } from '../../store/useDiaryStore';
 import { useCartStore } from '../../store/useCartStore';
 import { getColors } from '../../config/theme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { SERVER_URL as SERVER } from '../../config/api';
 import {
   ArrowLeft, Clock, Flame, Droplet, Wheat,
   CheckCircle2, ChefHat, Heart, ShoppingCart,
@@ -24,8 +25,6 @@ import {
 
 const { width: SW, height: SH } = Dimensions.get('window');
 const IMG_H = Math.round(SH * 0.38);
-
-const SERVER = 'http://192.168.1.16:8000';
 
 // ─── Haptic helper ─────────────────────────────────────────────────────────────
 const haptic = (type: 'select' | 'medium' | 'heavy' | 'success' | 'warning') => {

@@ -15,8 +15,7 @@ import {
   SleepSessionRecord, 
   ExerciseSessionRecord 
 } from 'react-native-health-connect/lib/typescript/types/records.types';
-
-const SERVER_URL = 'http://192.168.1.16:8000'; // Replace with appropriate .env variable in production
+import { SERVER_URL } from '../config/api';
 
 // Common biometric data interface
 interface UnifiedHealthData {

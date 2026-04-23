@@ -3,7 +3,7 @@
  * Centralized server address for AI scanners and data synchronization.
  */
 
-export const SERVER_IP = '192.168.1.107';
+export const SERVER_IP = '192.168.1.16';
 export const SERVER_PORT = '8000';
 export const SERVER_URL = `http://${SERVER_IP}:${SERVER_PORT}`;
 

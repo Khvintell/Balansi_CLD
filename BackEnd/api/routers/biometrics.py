@@ -99,6 +99,8 @@ async def bio_engine_sync(request: BiometricsSyncRequest):
     }}
     """
     
+    print(f"[BioEngine] Triggering AI sync for {bio.step_count} steps...")
+    
     try:
         response = model.generate_content(
             system_prompt,
@@ -106,7 +108,8 @@ async def bio_engine_sync(request: BiometricsSyncRequest):
                 response_mime_type="application/json"
             )
         )
-        ai_result = extract_json(response.text) or json.loads(response.text)
+        # Use json.loads directly since we specified response_mime_type
+        ai_result = json.loads(response.text)
         
         final_calories = ai_result.get("target_calories", target_calories)
         final_macros = ai_result.get("adjusted_macros", macros)
@@ -115,8 +118,11 @@ async def bio_engine_sync(request: BiometricsSyncRequest):
         
     except Exception as e:
         import traceback
-        print(f"Gemini Error Traceback: {traceback.format_exc()}")
-        final_calories = target_calories
+        error_msg = traceback.format_exc()
+        print(f"!!! BioEngine Critical Error: {str(e)}")
+        print(error_msg)
+        
+        # Fallback logic
         final_macros = macros
         final_message = "თქვენი დღიური ნორმა დაკორექტირებულია."
         final_alert = requires_alert

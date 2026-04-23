@@ -135,14 +135,14 @@ export const NutritionCard = ({
                   ? (profile.isVerified ? `rgba(29,185,84,${o})` : `rgba(249,115,22,${o})`)
                   : `rgba(251,146,60,${o})`,
                 labelColor: () => C.inkLight,
-                propsForDots: { r: '5', strokeWidth: '2.5', stroke: C.surface },
+                propsForDots: { r: 5, strokeWidth: 2, stroke: C.surface },
                 fillShadowGradient: chartType === 'weight' ? (profile.isVerified ? C.primary : C.orange) : C.orange,
                 fillShadowGradientOpacity: 0.18,
                 propsForBackgroundLines: { stroke: C.border, strokeDasharray: '4' },
                 propsForLabels: { fontSize: 10, fontWeight: '700' },
                 formatXLabel: (label) => ` ${label} `
               }}
-              bezier
+              bezier={chartType === 'weight' ? (chartWeightData.length >= 2) : (calorieHistory.length >= 2)}
               style={{ marginTop: 16, borderRadius: 16 }}
             />
           </View>

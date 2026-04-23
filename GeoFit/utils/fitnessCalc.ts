@@ -15,9 +15,10 @@ export interface UserProfileData {
  * Calculates Body Mass Index (BMI)
  */
 export const calculateBMI = (weight: number, height: number): string => {
-  if (!weight || !height) return '0.0';
+  if (!weight || !height || isNaN(weight) || isNaN(height) || height <= 0) return '0.0';
   const heightM = height / 100;
-  return (weight / (heightM * heightM)).toFixed(1);
+  const bmi = weight / (heightM * heightM);
+  return isFinite(bmi) ? bmi.toFixed(1) : '0.0';
 };
 
 /**

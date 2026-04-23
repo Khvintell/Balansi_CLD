@@ -2,15 +2,30 @@ import json
 import os
 import re
 
+GEO_TO_LAT = {
+    'ა': 'a', 'ბ': 'b', 'გ': 'g', 'დ': 'd', 'ე': 'e', 'ვ': 'v', 'ზ': 'z', 'თ': 't', 'ი': 'i', 'კ': 'k',
+    'ლ': 'l', 'მ': 'm', 'ნ': 'n', 'ო': 'o', 'პ': 'p', 'ჟ': 'zh', 'რ': 'r', 'ს': 's', 'ტ': 't', 'უ': 'u',
+    'ფ': 'p', 'ქ': 'k', 'ღ': 'gh', 'ყ': 'q', 'შ': 'sh', 'ჩ': 'ch', 'ც': 'ts', 'ძ': 'dz', 'წ': 'ts',
+    'ჭ': 'ch', 'ხ': 'kh', 'ჯ': 'j', 'ჰ': 'h'
+}
+
+def transliterate(s):
+    res = ""
+    for char in s.lower():
+        res += GEO_TO_LAT.get(char, char)
+    # Remove non-ascii and keep spaces/dashes
+    res = re.sub(r'[^a-zA-Z0-9\.\-\_\s\(\)]', '', res)
+    # Replace multiple spaces with one
+    res = ' '.join(res.split())
+    # Replace spaces with underscores for safer filenames
+    res = res.replace(' ', '_')
+    return res
+
 def normalize_string(s):
-    # Replace special dashes with standard hyphen
-    s = s.replace('\u2012', '-') # FIGURE DASH
-    s = s.replace('\u2013', '-') # EN DASH
-    s = s.replace('\u2014', '-') # EM DASH
-    s = s.replace('\u2015', '-') # HORIZONTAL BAR
-    # Remove extra spaces
-    s = ' '.join(s.split())
-    return s
+    # Transliterate and clean
+    name, ext = os.path.splitext(s)
+    new_name = transliterate(name)
+    return f"{new_name}{ext}"
 
 def normalize_assets():
     assets_dir = 'assets'
@@ -39,7 +54,7 @@ def normalize_assets():
                 file_map[filename] = new_filename
             else:
                 os.rename(old_path, new_path)
-                print(f"Renamed: {filename} -> {new_filename}")
+                # print(f"Renamed: {filename} -> {new_filename}")
                 file_map[filename] = new_filename
         else:
             file_map[filename] = filename

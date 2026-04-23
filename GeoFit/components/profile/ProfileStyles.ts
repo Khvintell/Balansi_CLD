@@ -2,15 +2,22 @@ import { StyleSheet, Platform, StatusBar, Dimensions } from 'react-native';
 
 const { width: SW } = Dimensions.get('window');
 
-export const getProfileStyles = (C: any, BOTTOM: number) => StyleSheet.create({
+export const getProfileStyles = (C: any, TOP: number, BOTTOM: number) => StyleSheet.create({
   // Main Profile Styles
-  root: { flex: 1, backgroundColor: C.bg, paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) : 0 },
-  scroll: { padding: 20, paddingBottom: 100 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, backgroundColor: C.bg },
-  headerBtn: { width: 40, height: 40, borderRadius: 14, backgroundColor: C.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: C.border },
-  headerBtnPrimary: { width: 40, height: 40, borderRadius: 14, backgroundColor: C.primaryLight, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: C.primaryBorder },
-  headerCenter: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  root: { flex: 1, backgroundColor: C.bg },
+  scroll: { flex: 1 },
+  scrollContent: { paddingBottom: BOTTOM + 32 },
+  header: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'space-between', 
+    paddingHorizontal: 16, 
+    paddingTop: TOP + 12, 
+    paddingBottom: 12, 
+    backgroundColor: C.bg 
+  },
   headerTitle: { fontSize: 16, fontWeight: '800', color: C.ink, letterSpacing: 0.3 },
+  statsRow: { flexDirection: 'row', gap: 12, marginBottom: 16, paddingHorizontal: 16 },
 
   heroCard: { backgroundColor: C.surface, borderRadius: 28, padding: 22, marginBottom: 14, borderWidth: 1, borderColor: C.border, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 20, shadowOffset: { width: 0, height: 8 }, elevation: 8 },
   heroGlow: { position: 'absolute', width: 200, height: 200, borderRadius: 100 },
@@ -114,12 +121,40 @@ export const getProfileStyles = (C: any, BOTTOM: number) => StyleSheet.create({
   waterPercentInfo: { fontSize: 14, fontWeight: '900', color: '#0EA5E9' },
 
   // AI & Diary
-  logBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: C.primary, borderRadius: 30, paddingVertical: 18, marginBottom: 20, overflow: 'hidden', shadowColor: C.primary, shadowOpacity: 0.3, shadowRadius: 15, shadowOffset: { width: 0, height: 6 }, elevation: 6 },
+  logBtn: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    gap: 10, 
+    backgroundColor: C.primary, 
+    borderRadius: 22, 
+    paddingVertical: 16, 
+    marginBottom: 20, 
+    overflow: 'hidden', 
+    shadowColor: C.primary, 
+    shadowOpacity: 0.35, 
+    shadowRadius: 12, 
+    shadowOffset: { width: 0, height: 6 }, 
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
   logBtnGlow: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(255,255,255,0.1)' },
-  logBtnTxt: { color: '#FFF', fontWeight: '800', fontSize: 16, letterSpacing: 0.3 },
-  cooldownRow: { backgroundColor: C.surface, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 17, borderRadius: 30, marginBottom: 20, borderWidth: 1, borderColor: C.border },
-  cooldownTxt: { color: C.inkLight, fontSize: 14, fontWeight: '600' },
-  cooldownTime: { color: C.ink, fontWeight: '800', fontVariant: ['tabular-nums'] },
+  logBtnTxt: { color: '#FFF', fontWeight: '900', fontSize: 16, letterSpacing: 0.5, textTransform: 'uppercase' },
+  cooldownRow: { 
+    backgroundColor: C.surface, 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    gap: 8, 
+    paddingVertical: 16, 
+    borderRadius: 22, 
+    marginBottom: 20, 
+    borderWidth: 1, 
+    borderColor: C.border 
+  },
+  cooldownTxt: { color: C.inkLight, fontSize: 13, fontWeight: '700' },
+  cooldownTime: { color: C.ink, fontWeight: '900', fontVariant: ['tabular-nums'], fontSize: 14 },
   macroBarWrap: { gap: 6 },
   macroBarHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   macroBarIcon: { width: 22, height: 22, borderRadius: 7, alignItems: 'center', justifyContent: 'center' },

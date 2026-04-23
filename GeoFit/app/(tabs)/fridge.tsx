@@ -10,6 +10,7 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { useThemeStore } from '../../store/useThemeStore';
 import { getColors } from '../../config/theme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { SERVER_URL } from '../../config/api';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import AnimatedReanimated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, withSequence } from 'react-native-reanimated';
 import * as ImagePicker from 'expo-image-picker';
@@ -25,11 +26,6 @@ import {
 } from 'lucide-react-native';
 
 const { width: SW, height: SH } = Dimensions.get('window');
-
-// ─── Design System ───
-
-
-const SERVER_URL = 'http://192.168.1.16:8000';
 
 const SCAN_MESSAGES = [
   "ვაღვიძებთ AI შეფ-მზარეულს... 👨‍🍳",

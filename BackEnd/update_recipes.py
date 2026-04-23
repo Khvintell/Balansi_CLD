@@ -20,7 +20,7 @@ for r in recipes:
         continue
         
     # Check for categories to update
-    targets = ['ისპანახის ფხალი', 'ჭარხლის ფხალი', 'შემწვარი ბადრიჯანი', 'შემწვარი ბარდიჯანი', 'მჭადი', 'ლობიანი']
+    targets = ['ისპანახის ფხალი', 'ჭარხლის ფხალი', 'შემწვარი ბადრიჯანი', 'შემწვარი ბარდიჯანი', 'მჭადი']
     
     # We check if any target string is in the name
     if any(tag in name for tag in targets):

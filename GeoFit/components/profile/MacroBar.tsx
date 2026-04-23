@@ -15,7 +15,8 @@ interface MacroBarProps {
 export const MacroBar = ({ 
   label, value, target, color, bg, unit, icon: Icon, S 
 }: MacroBarProps) => {
-  const pct = Math.min(value / target, 1) || 0;
+  const rawPct = value / (target || 1);
+  const pct = isFinite(rawPct) ? Math.min(Math.max(0, rawPct), 1) : 0;
   const anim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => { 

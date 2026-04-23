@@ -67,7 +67,7 @@ export const SettingsSection = ({
   return (
     <View style={{ gap: 20, marginBottom: 40 }}>
       <View>
-        <Text style={S.sectionTitle}>🎨 აპლიკაციის თემა</Text>
+        <Text style={S.sectionTitle}>🎨 აირჩიე შენი სტილი</Text>
         <View style={[S.settingsGroup, { marginTop: 12 }]}>
           {Object.keys(THEME_NAMES).map((tId: any, i: number) => {
             const tOpts = THEME_NAMES[tId];
@@ -106,27 +106,27 @@ export const SettingsSection = ({
       </View>
 
       <View>
-        <Text style={S.sectionTitle}>⚙️ პარამეტრები</Text>
+        <Text style={S.sectionTitle}>⚙️ შენი პრეფერენციები</Text>
         <View style={[S.settingsGroup, { marginTop: 12 }]}>
-          <SettingsRow icon={Bell} title="შეტყობინებები" subtitle="ყოველდღიური შეხსენება"
+          <SettingsRow icon={Bell} title="შეგახსენო ხოლმე? 🔔" subtitle="ყოველდღიური მეგობრული შეხსენება"
             color={C.blue} bg={C.blueLight} isSwitch switchValue={notifEnabled} onSwitchChange={toggleNotifications} S={S} />
           <View style={S.settingsDivider} />
 
           {!isPro && (
             <>
-              <SettingsRow icon={Gift} title="პრომო კოდის გააქტიურება" subtitle="გაიხსენი პრემიუმ ფუნქციები"
+              <SettingsRow icon={Gift} title="საჩუქარი გაქვს? 🎁" subtitle="გააქტიურე პრომო კოდი"
                 color={C.primaryDark} bg={C.primaryLight} onPress={onPromoPress} S={S} />
               <View style={S.settingsDivider} />
             </>
           )}
 
-          <SettingsRow icon={Share2} title="პროგრესის გაზიარება" subtitle="ფოტოს გაზიარება"
+          <SettingsRow icon={Share2} title="მეგობრებსაც ვაჩვენოთ? ✨" subtitle="შენი პროგრესის გაზიარება"
             color={C.teal} bg={C.tealLight} onPress={onSharePress} S={S} />
           <View style={S.settingsDivider} />
-          <SettingsRow icon={HelpCircle} title="დახმარება" subtitle="FAQ და მხარდაჭერა"
+          <SettingsRow icon={HelpCircle} title="კითხვები გაქვს? 💡" subtitle="FAQ და მხარდაჭერა"
             color={C.inkMid} bg={C.surfaceMid} onPress={onHelpPress} S={S} />
           <View style={S.settingsDivider} />
-          <SettingsRow icon={Trash2} title="მონაცემების განულება"
+          <SettingsRow icon={Trash2} title="თავიდან დავიწყოთ? 🔄"
             color={C.red} bg={C.redLight} onPress={onResetPress} isDestructive S={S} />
         </View>
       </View>

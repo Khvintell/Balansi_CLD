@@ -19,12 +19,11 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { useThemeStore } from '../../store/useThemeStore';
 import { getColors } from '../../config/theme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { SERVER_URL } from '../../config/api';
 
 const { width: W, height: H } = Dimensions.get('window');
 const FRAME_SIZE = W * 0.85; 
 const OVERLAY_COLOR = 'rgba(10, 15, 13, 0.85)'; 
-
-const SERVER_URL = 'http://192.168.1.16:8000'; 
 
 // ─── Balansi Design System ─────────────────────────────
 
