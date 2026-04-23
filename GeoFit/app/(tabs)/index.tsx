@@ -4,7 +4,15 @@ import {
   TouchableOpacity, TextInput, Dimensions, Platform,
   StatusBar, Modal, Animated, FlatList, RefreshControl, Pressable,
 } from 'react-native';
-import PagerView from 'react-native-pager-view';
+
+let PagerView: any;
+if (Platform.OS !== 'web') {
+  try {
+    PagerView = require('react-native-pager-view').default;
+  } catch (e) {
+    console.warn('PagerView could not be loaded');
+  }
+}
 import Svg, {
   Defs, LinearGradient as SvgGradient, Stop, RadialGradient,
   Rect, Circle, Ellipse, Path, G, Line,
@@ -995,10 +1003,11 @@ export default function HomeScreen() {
             ) : (
               renderDiscoverContent()
             )
+          ) : Platform.OS === 'web' ? (
+            <View style={styles.pagerPage}>
+              {renderCategoryGrid(activeCategory)}
+            </View>
           ) : (
-            // ═══════════════════════════════════════════════════════════════
-            // PAGER VIEW — ნეიტივი swipe-ისთვის
-            // ═══════════════════════════════════════════════════════════════
             <PagerView
               ref={pagerRef}
               style={[
