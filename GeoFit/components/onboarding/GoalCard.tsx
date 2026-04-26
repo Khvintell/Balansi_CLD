@@ -1,6 +1,6 @@
 import React from 'react';
 import { TouchableOpacity, View, Text, StyleSheet } from 'react-native';
-import { CheckCircle2 } from 'lucide-react-native';
+import { CheckCircle } from 'lucide-react-native';
 
 const gc = StyleSheet.create({
   card: { flexDirection:'row', alignItems:'center', padding:18, borderRadius:24, borderWidth:2, marginBottom:12, shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 15 },
@@ -20,6 +20,6 @@ export const GoalCard = ({ icon:Icon, label, desc, color, bg, selected, onPress 
       <Text style={[gc.label, { color: selected ? color : '#0D1117' }]}>{label}</Text>
       <Text style={gc.desc}>{desc}</Text>
     </View>
-    {selected && <CheckCircle2 size={22} color={color} fill="#FFF" />}
+    {selected && <CheckCircle size={22} color={color} fill="#FFF" />}
   </TouchableOpacity>
 );

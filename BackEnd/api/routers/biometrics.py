@@ -10,7 +10,7 @@ router = APIRouter(tags=["biometrics"])
 
 # Configure Gemini
 genai.configure(api_key=settings.GOOGLE_API_KEY)
-model = genai.GenerativeModel('gemini-1.5-flash')
+model = genai.GenerativeModel('gemini-flash-latest')
 
 class BiometricData(BaseModel):
     sleep_duration_minutes: int

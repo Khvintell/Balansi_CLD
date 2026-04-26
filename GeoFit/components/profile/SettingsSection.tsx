@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Switch } from 'react-native';
 import { 
-  CheckCircle2, Leaf, Lock, Bell, Gift, 
+  CheckCircle, Leaf, Lock, Bell, Gift, 
   Share2, HelpCircle, Trash2, ChevronRight 
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
@@ -96,7 +96,7 @@ export const SettingsSection = ({
                   {tOpts.isPremium && !isPro && (
                     <View style={S.settingsBadge}><Text style={S.settingsBadgeText}>PRO</Text></View>
                   )}
-                  {isActive && <CheckCircle2 size={20} color={C.primary} />}
+                  {isActive && <CheckCircle size={20} color={C.primary} />}
                 </TouchableOpacity>
                 {i < Object.keys(THEME_NAMES).length - 1 && <View style={S.settingsDivider} />}
               </View>

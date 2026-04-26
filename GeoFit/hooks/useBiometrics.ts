@@ -113,7 +113,7 @@ export const useBiometrics = () => {
           };
           AppleHealthKit.getSleepSamples(sleepOpts, (err3: Object, results3: HealthValue[]) => {
             if (!err3 && results3?.length) {
-              const asSleepSamples = results3 as { value: string, startDate: string, endDate: string }[];
+              const asSleepSamples = results3 as any[];
               const sleepPeriods = asSleepSamples.filter(s => s.value === 'ASLEEP');
               const totalSleepMs = sleepPeriods.reduce((sum, s) => sum + (new Date(s.endDate).getTime() - new Date(s.startDate).getTime()), 0);
               sleep_duration_minutes = Math.floor(totalSleepMs / 60000);
@@ -153,10 +153,10 @@ export const useBiometrics = () => {
         readRecords('ExerciseSession', { timeRangeFilter }),
       ]);
 
-      const step_count = stepsRef.records.reduce((acc, curr) => acc + curr.count, 0);
-      const active_energy_burned = caloriesRef.records.reduce((acc, curr) => acc + curr.energy.inKilocalories, 0);
-      const workouts = exerciseRef.records.map(r => r.exerciseType.toString());
-      const workoutDurationMinutes = exerciseRef.records.reduce((acc, curr) => {
+      const step_count = stepsRef.reduce((acc: number, curr: any) => acc + curr.count, 0);
+      const active_energy_burned = caloriesRef.reduce((acc: number, curr: any) => acc + curr.energy.inKilocalories, 0);
+      const workouts = exerciseRef.map((r: any) => r.exerciseType.toString());
+      const workoutDurationMinutes = exerciseRef.reduce((acc: number, curr: any) => {
         return acc + (new Date(curr.endTime).getTime() - new Date(curr.startTime).getTime()) / 60000;
       }, 0);
 
@@ -166,7 +166,7 @@ export const useBiometrics = () => {
         endTime: endOfDay.toISOString(),
       };
       const sleepRef = await readRecords('SleepSession', { timeRangeFilter: sleepFilter });
-      const sleep_duration_minutes = sleepRef.records.reduce((acc, curr) => {
+      const sleep_duration_minutes = sleepRef.reduce((acc: number, curr: any) => {
         return acc + (new Date(curr.endTime).getTime() - new Date(curr.startTime).getTime()) / 60000;
       }, 0);
 

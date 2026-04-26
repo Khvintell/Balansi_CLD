@@ -1,4 +1,7 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+# -*- coding: utf-8 -*-
+import os
+
+content = u"""import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   StyleSheet, Text, View, SafeAreaView, TouchableOpacity,
   Animated, Dimensions, Platform, StatusBar, Alert, ScrollView, Modal
@@ -13,8 +16,8 @@ import { Svg, Defs, Rect, Mask as SvgMask } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import {
   Scan, Zap, Leaf, Image as ImageIcon, Activity, X,
-  Camera, CheckCircle, Crown, Lock, ChevronRight, Scale,
-  Lightbulb, RotateCcw
+  Camera, CheckCircle2, Crown, Lock, ChevronRight, Scale,
+  Lightbulb, RotateCcw, Sparkles
 } from 'lucide-react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useThemeStore } from '../../store/useThemeStore';
@@ -27,18 +30,18 @@ const { width: W, height: H } = Dimensions.get('window');
 const FRAME_SIZE = W * 0.85;
 const OVERLAY_COLOR = 'rgba(10, 15, 13, 0.85)';
 
-// ─── Balansi Design System ─────────────────────────────
+// \u2500\u2500\u2500 Balansi Design System \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 
 
 const LOADING_MESSAGES = [
-  "ვაღვიძებთ AI შეფ-მზარეულს... 👨‍🍳",
-  "ვსწავლობთ ინგრედიენტებს... 🔍",
-  "ვითვლით მაკროებს... 🧮",
-  "თითქმის მზადაა! ✨"
+  "\\u1015\\u10d0\\u10e6\\u10d5\\u10d8\\u10eb\\u10d4\\u10d1\\u10d7 AI \\u10e8\\u10d4\\u10e4-\\u10db\\u10d6\\u10d0\\u10e0\\u10d4\\u10e3\\u10da\\u10e1... \\ud83d\\udc68\\u200d\\ud83c\\udf73",
+  "\\u10d5\\u10e1\\u10ec\\u10d0\\u10d5\\u10da\\u10dd\\u10d1\\u10d7 \\u10d8\\u10dc\\u10d2\\u10e0\\u10d4\\u10d3\\u10d8\\u10d4\\u10dc\\u10e2\\u10d4\\u10d1\\u10e1... \\ud83d\\udd0d",
+  "\\u10d5\\u10d8\\u10d7\\u10d5\\u10da\\u10d8\\u10d7 \\u10db\\u10d0\\u10d9\\u10e0\\u10dd\\u10d4\\u10d1\\u10e1... \\ud83e\\uddee",
+  "\\u10d7\\u10d8\\u10d7\\u10e5\\u10db\\u10d8\\u10e1 \\u10db\\u10d6\\u10d0\\u10d3\\u10d0\\u10d0! \\u2728"
 ];
 
-// 🧪 მეცნიერული კალორიების წვის კალკულატორი (MET 8.0)
-const calculateBurnTime = (calories: number, weight: number) => {
+// \\ud83e\\uddea \\u10db\\u10d4\\u10ea\\u10dc\\u10d8\\u10d4\\u10e0\\u10e3\\u10da\\u10d8 \\u10d9\\u10d0\\u10da\\u10dd\\u10e0\\u10d8\\u10d4\\u10d1\\u10d8\\u10e1 \\u10ec\\u10d5\\u10d8\\u10e1 \\u10d9\\u10d0\\u10da\\u10d9\\u10e3\\u10da\\u10d0\\u10e2\\u10dd\\u10e0\\u10d8 (MET 8.0)
+const calculateBurnTime = (calories, weight) => {
   if (!calories) return 0;
   const userW = weight > 0 ? weight : 70;
   const kcalPerMin = (8.0 * userW * 3.5) / 200;
@@ -53,18 +56,18 @@ export default function ScannerScreen() {
 
   const router = useRouter();
   const [permission, requestPermission] = useCameraPermissions();
-  const cameraRef = useRef<CameraView>(null);
+  const cameraRef = useRef(null);
 
   const [isScanning, setIsScanning] = useState(false);
   const [flash, setFlash] = useState(false);
-  const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
-  const [resultData, setResultData] = useState<any>(null);
+  const [capturedPhoto, setCapturedPhoto] = useState(null);
+  const [resultData, setResultData] = useState(null);
   const [loadingMsgIdx, setLoadingMsgIdx] = useState(0);
   const [added, setAdded] = useState(false);
 
-  const [userWeight, setUserWeight] = useState<number>(70);
+  const [userWeight, setUserWeight] = useState(70);
 
-  // 🚀 FREEMIUM STATES 🚀
+  // \\ud83d\\ude80 FREEMIUM STATES \\ud83d\\ude80
   const [isPro, setIsPro] = useState(false);
   const [scansUsed, setScansUsed] = useState(0);
   const [daysUsed, setDaysUsed] = useState(0); // 0, 1, 2 = allowed. 3+ = blocked
@@ -80,7 +83,7 @@ export default function ScannerScreen() {
   const isCancelledRef = useRef(false);
   const dataLoaded = useRef(false);
 
-  // 🚀 REANIMATED VIEWFINDER GLOW 🚀
+  // \\ud83d\\ude80 REANIMATED VIEWFINDER GLOW \\ud83d\\ude80
   const frameGlow = useSharedValue(0.5);
   useEffect(() => {
     frameGlow.value = withRepeat(
@@ -124,13 +127,13 @@ export default function ScannerScreen() {
       loadUserDataAndLimits();
       dataLoaded.current = true;
     } else {
-      // ამოწმებს PRO სტატუსს, თუ პროფილში შეიცვალა
+      // \\u10d0\\u10db\\u10dd\\u10ec\\u10db\\u10d4\\u10d1\\u10e1 PRO \\u10e1\\u10e2\\u10d0\\u10e2\\u10e3\\u10e1\\u10e1, \\u10d7\\u10e3 \\u10de\\u10e0\\u10dd\\u10e4\\u10d8\\u10da\\u10e8\\u10d8 \\u10e8\\u10d4\\u10d8\\u10ea\\u10d5\\u10d0\\u10da\\u10d0
       checkProStatus();
     }
   }, []));
 
   useEffect(() => {
-    let interval: any;
+    let interval;
     if (isScanning) {
       interval = setInterval(() => setLoadingMsgIdx(p => (p + 1) % LOADING_MESSAGES.length), 2000);
     } else setLoadingMsgIdx(0);
@@ -212,15 +215,15 @@ export default function ScannerScreen() {
     ])).start();
   };
 
-  // 📸 კამერის ღილაკზე დაჭერა (The Gatekeeper)
+  // \\ud83d\\udcf8 \\u10d9\\u10d0\\u10db\\u10d4\\u10e0\\u10d8\\u10e1 \\u10e6\\u10d8\\u10da\\u10d0\\u10d9\\u10d4\\u10d1\\u10d4\\u10d1\\u10d8\\u10e1 \\u10d3\\u10d0\\u10ed\\u10d4\\u10e0\\u10d0 (The Gatekeeper)
   const handleCapture = async () => {
     if (!cameraRef.current || isScanning) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
 
-    // 🛑 დაცვა: 3 დღიანი ტრიალი + დღეში 3 სკანირება
+    // \\ud83d\\ud🛑 \\u10d3\\u10d0\\u10ea\\u10d5\\u10d0: 3 \\u10d3\\u10e6\\u10d8\\u10d0\\u10dc\\u10d8 \\u10e2\\u10e0\\u10d8\\u10d0\\u10da\\u10d8 + \\u10d3\\u10e6\\u10d4\\u10e8\\u10d8 3 \\u10e1\\u10d9\\u10d0\\u10dc\\u10d8\\u10e0\\u10d4\\u10d1\\u10d0
     if (!isPro) {
       if (daysUsed >= 3 || scansUsed >= 3) {
-        router.push('/paywall');
+        setShowPaywall(true);
         return;
       }
     }
@@ -235,7 +238,7 @@ export default function ScannerScreen() {
       const photo = await cameraRef.current.takePictureAsync({ quality: 0.3, skipProcessing: true });
       if (photo?.uri) processImage(photo.uri);
     } catch (error) {
-      Alert.alert('შეცდომა', 'ფოტოს გადაღება ვერ მოხერხდა.');
+      Alert.alert('\\u10e8\\u10d4\\u10ea\\u10d3\\u10dd\\u10db\\u10d0', '\\u10e4\\u10dd\\u10e2\\u10dd\\u10e1 \\u10d2\\u10d0\\u10d3\\u10d0\\u10e6\\u10d4\\u10d1\\u10d0 \\u10d5\\u10d4\\u10e0 \\u10db\\u10dd\\u10e3\\u10e1\\u10ec\\u10e0\\u10d0.');
       Animated.timing(laserOpacity, { toValue: 1, duration: 300, useNativeDriver: Platform.OS !== 'web' }).start();
     }
   };
@@ -243,10 +246,10 @@ export default function ScannerScreen() {
   const pickImage = async () => {
     Haptics.selectionAsync();
 
-    // 🛑 დაცვა გალერეიდან არჩევაზეც!
+    // \\ud83d\\ud🛑 \\u10d3\\u10d0\\u10ea\\u10d5\\u10d0 \\u10d2\\u10d0\\u10da\\u10d4\\u10e0\\u10d4\\u10d8\\u10d3\\u10d0\\u10dc \\u10d0\\u10e0\\u10e7\\u10d4\\u10d5\\u10d0\\u10d6\\u10d4\\u10ea!
     if (!isPro) {
       if (daysUsed >= 3 || scansUsed >= 3) {
-        router.push('/paywall');
+        setShowPaywall(true);
         return;
       }
     }
@@ -260,7 +263,7 @@ export default function ScannerScreen() {
     }
   };
 
-  const processImage = async (uri: string) => {
+  const processImage = async (uri) => {
     isCancelledRef.current = false;
     setIsScanning(true);
     setCapturedPhoto(uri);
@@ -273,7 +276,7 @@ export default function ScannerScreen() {
       );
 
       const formData = new FormData();
-      formData.append('file', { uri: manipResult.uri, name: 'scan.jpg', type: 'image/jpeg' } as any);
+      formData.append('file', { uri: manipResult.uri, name: 'scan.jpg', type: 'image/jpeg' });
 
       const response = await fetch(`${SERVER_URL}/api/scan-food`, {
         method: 'POST',
@@ -298,12 +301,12 @@ export default function ScannerScreen() {
 
       } else {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        Alert.alert('შეცდომა', data.message || 'საჭმელი ვერ ამოვიცანით.', [{ text: 'თავიდან ცდა', onPress: retakePhoto }]);
+        Alert.alert('\\u10e8\\u10d4\\u10ea\\u10d3\\u10dd\\u10db\\u10d0', data.message || '\\u10e1\\u10d0\\u10ed\\u10db\\u10d4\\u10da\\u10d8 \\u10d5\\u10d4\\u10e0 \\u10d0\\u10db\\u10dd\\u10d5\\u10d8\\u10ea\\u10d0\\u10dc\\u10d8\\u10d7.', [{ text: '\\u10d7\\u10d0\\u10d5\\u10d8\\u10d3\\u10d0\\u10dc \\u10ea\\u10d3\\u10d0', onPress: retakePhoto }]);
       }
     } catch (error) {
       if (isCancelledRef.current) return;
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert('შეცდომა', 'სერვერთან კავშირი ვერ მოხერხდა.', [{ text: 'კარგი', onPress: retakePhoto }]);
+      Alert.alert('\\u10e8\\u10d4\\u10ea\\u10d3\\u10dd\\u10db\\u10d0', '\\u10e1\\u10d4\\u10e0\\u10d5\\u10d4\\u10e0\\u10d7\\u10d0\\u10dc \\u10d9\\u10d0\\u10d5\\u10e8\\u10d8\\u10e0\\u10d8 \\u10d5\\u10d4\\u10e0 \\u10db\\u10dd\\u10e3\\u10e1\\u10ec\\u10e0\\u10d0.', [{ text: '\\u10d9\\u10d0\\u10e0\\u10d2\\u10d8', onPress: retakePhoto }]);
     } finally {
       if (!isCancelledRef.current) setIsScanning(false);
     }
@@ -329,7 +332,7 @@ export default function ScannerScreen() {
     try {
       const today = new Date().toISOString().split('T')[0];
       
-      // ✅ Use global store instead of manual AsyncStorage
+      // \\u2705 Use global store instead of manual AsyncStorage
       addMeal(today, {
         id: Date.now().toString(),
         name: resultData.name,
@@ -343,14 +346,14 @@ export default function ScannerScreen() {
       });
 
       setTimeout(() => {
-        Alert.alert("✅ დამატებულია!", `${resultData.calories} კკალ შევიდა დღიურში.`, [
-          { text: "კამერაში დაბრუნება", onPress: retakePhoto, style: "cancel" },
-          { text: "დღიურის ნახვა", onPress: () => { retakePhoto(); router.push('/diary'); } }
+        Alert.alert("\\u2705 \\u10d3\\u10d0\\u10db\\u10d0\\u10e2\\u10d4\\u10d1\\u10e3\\u10da\\u10d8\\u10d0!", `${resultData.calories} \\u10d9\\u10d9\\u10d0\\u10da \\u10e8\\u10d4\\u10d5\\u10d8\\u10d3\\u10d0 \\u10d3\\u10e6\\u10d8\\u10e3\\u10e0\\u10e8\\u10d8.`, [
+          { text: "\\u10d9\\u10d0\\u10db\\u10d4\\u10e0\\u10d0\\u10e8\\u10d8 \\u10d3\\u10d0\\u10d1\\u10e0\\u10e3\\u10dc\\u10d4\\u10d1\\u10d0", onPress: retakePhoto, style: "cancel" },
+          { text: "\\u10d3\\u10e6\\u10d8\\u10e3\\u10e0\\u10d8\\u10e1 \\u10dc\\u10d0\\u10e3\\u10da\\u10d5\\u10d0", onPress: () => { retakePhoto(); router.push('/diary'); } }
         ]);
       }, 300);
     } catch (error) {
       setAdded(false);
-      Alert.alert("შეცდომა", "მონაცემების შენახვა ვერ მოხერხდა.");
+      Alert.alert("\\u10e8\\u10d4\\u10ea\\u10d3\\u10dd\\u10db\\u10d0", "\\u10db\\u10dd\\u10dc\\u10d0\\u10ea\\u10d4\\u10db\\u10d4\\u10d1\\u10d8\\u10e1 \\u10e8\\u10d4\\u10dc\\u10d0\\u10e5\\u10d5\\u10d0 \\u10d5\\u10d4\\u1000 \\u10db\\u10dd\\u10e3\\u10e1\\u10ec\\u10e0\\u10d0.");
     }
   };
 
@@ -371,9 +374,9 @@ export default function ScannerScreen() {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', padding: 20 }]}>
         <Camera size={60} color={DS.emerald} style={{ marginBottom: 20 }} />
-        <Text style={styles.permissionTitle}>კამერაზე წვდომა</Text>
+        <Text style={styles.permissionTitle}>\\u10d9\\u10d0\\u10db\\u10d4\\u10e0\\u10d0\\u10d6\\u10d4 \\u10ec\\u10d5\\u10d3\\u10dd\\u10db\\u10d0</Text>
         <TouchableOpacity style={styles.permissionBtn} onPress={requestPermission}>
-          <Text style={styles.permissionBtnText}>ნებართვის მიცემა</Text>
+          <Text style={styles.permissionBtnText}>\\u10dc\\u10d4\\u10d1\\u10d0\\u10e0\\u10d7\\u10d5\\u10d8\\u10e1 \\u10db\\u10d8\\u10ea\\u10d4\\u10db\\u10d0</Text>
         </TouchableOpacity>
       </View>
     );
@@ -392,7 +395,7 @@ export default function ScannerScreen() {
 
       <Animated.View style={[StyleSheet.absoluteFillObject, { backgroundColor: '#FFF', opacity: flashAnim, zIndex: 100 }]} pointerEvents="none" />
 
-      {/* ── 🎭 PREMIUM CAMERA SVG MASK ── */}
+      {/* \\u2500\u2500 \ud83c\\udfad PREMIUM CAMERA SVG MASK \\u2500\u2500 */}
       <View style={StyleSheet.absoluteFill} pointerEvents="none">
         <Svg height={H} width={W}>
           <Defs>
@@ -427,7 +430,7 @@ export default function ScannerScreen() {
         </SafeAreaView>
       )}
 
-      {/* ── 🚀 VIEWPORT UI (CORNERS & DOT) ── */}
+      {/* \\u2500\u2500 \\ud83d\\ude80 VIEWPORT UI (CORNERS & DOT) \\u2500\u2500 */}
       {!resultData && (
         <View style={[styles.viewportUi, { top: viewfinderY, height: FRAME_SIZE }]} pointerEvents="none">
           <View style={[styles.corner, styles.topLeft]} />
@@ -456,19 +459,19 @@ export default function ScannerScreen() {
         </View>
       )}
 
-      {/* ── 🔘 BOTTOM ACTION AREA (TEXT & CONTROLS) ── */}
+      {/* \\u2500\u2500 \\ud83d\\udd18 BOTTOM ACTION AREA (TEXT & CONTROLS) \\u2500\u2500 */}
       {!resultData && !isScanning && (
         <SafeAreaView style={styles.controlsBottomArea}>
           <Animated.View style={{ opacity: laserOpacity, alignItems: 'center', paddingHorizontal: 35, marginBottom: 35 }}>
-            <Text style={styles.instructionTitle}>დროა ვისადილოთ! 🍽️</Text>
-            <Text style={styles.instructionSub}>დაიჭირე კამერა თეფშის გასწვრივ. მე შევაფასებ ულუფას და დაგითვლი მაკროებს.</Text>
+            <Text style={styles.instructionTitle}>\\u10d3\\u10e0\\u10dd\\u10d0 \\u10d5\\u10d8\\u10e1\\u10d0\\u10d3\\u10d8\\u10da\\u10dd\\u10d7! \\ud83c\\udf7d\\ufe0f</Text>
+            <Text style={styles.instructionSub}>\\u10d3\\u10d0\\u10d8\\u10ed\\u10d8\\u10e0\\u10d4 \\u10d9\\u10d0\\u10db\\u10d4\\u10e0\\u10d0 \\u10d7\\u10d4\\u10e4\\u10e8\\u10d8\\u10e1 \\u10d2\\u10d0\\u10e1\\u10ec\\u10d5\\u10e0\\u10d8\\u10d5. \\u10db\\u10d4 \\u10e8\\u10d4\\u10d5\\u10d0\\u10e4\\u10d0\\u10e1\\u10d4\\u10d1 \\u10e3\\u10da\\u10e3\\u10e4\\u10d0\\u10e1 \\u10d3\\u10d0 \\u10d3\\u10d0\\u10d2\\u10d8\\u10d7\\u10d5\\u10da\\u10d8 \\u10db\\u10d0\\u10d9\\u10e0\\u10dd\\u10d4\\u10d1\\u10e1.</Text>
           </Animated.View>
 
           {!isPro && (
             <View style={{ marginBottom: 25, alignSelf: 'center' }}>
               <BlurView intensity={80} tint="dark" style={styles.limitPill}>
                 <Zap size={14} color="#F59E0B" fill="#F59E0B" style={{ marginRight: 6 }} />
-                <Text style={styles.limitPillTxt}>დარჩა {Math.max(0, 3 - scansUsed)} უფასო სკანირება</Text>
+                <Text style={styles.limitPillTxt}>\\u10d3\\u10d0\\u10e0\\u10e9\\u10d0 {Math.max(0, 3 - scansUsed)} \\u10e3\\u10e4\\u10d0\\u10e1\\u10dd \\u10e1\\u10d9\\u10d0\\u10dc\\u10d8\\u10e0\\u10d4\\u10d1\\u10d0</Text>
               </BlurView>
             </View>
           )}
@@ -491,7 +494,7 @@ export default function ScannerScreen() {
         </SafeAreaView>
       )}
 
-      {/* ── 🚀 პრემიუმ შედეგების ბარათი ── */}
+      {/* \\u2500\u2500 \\ud83d\\ude80 \\u10de\\u10e0\\u10d4\\u10db\\u10d8\\u10e3\\u10db \\u10e8\\u10d4\\u10d3\\u10d4\\u10d2\\u10d4\\u10d1\\u10d8\\u10e1 \\u10d1\\u10d0\\u10e0\\u10d0\\u10d7\\u10d8 \\u2500\u2500 */}
       <Animated.View style={[styles.resultSheet, { transform: [{ translateY: resultSheetAnim }] }]}>
         {resultData && capturedPhoto && (
           <SafeAreaView style={{ flex: 1 }}>
@@ -501,64 +504,72 @@ export default function ScannerScreen() {
                 <Image source={{ uri: capturedPhoto }} style={styles.resultImage} contentFit="cover" transition={300} />
               </View>
 
-              <Text style={styles.foodName}>{resultData.name}</Text>
+              <View style={styles.foodTitleContainer}>
+                <View style={styles.chefBadge}>
+                  <Sparkles size={14} color={DS.emerald} style={{ marginRight: 6 }} />
+                  <Text style={styles.chefBadgeText}>Balansi AI</Text>
+                </View>
+                <Text style={styles.foodName}>{resultData.name}</Text>
+              </View>
 
-              {/* 🚀 PRO მომხმარებლებს უჩანთ MET კალკულატორი, სხვებს უბრალოდ კალორიები */}
+              {/* \\ud83d\\ude80 PRO \\u10db\\u10dd\\u10db\\u10e3\\u10db\\u10d0\\u10e0\\u10d4\\u10d1\\u10da\\u10d4\\u10d1\\u10e1 \\u10e3\\u10e9\\u10d0\\u10dc\\u10d7 MET \\u10d9\\u10d0\\u10da\\u10d9\\u10e3\\u10da\\u10d0\\u10e2\\u10dd\\u10e0\\u10d8, \\u10e1\\u10d3\\u10d5\\u10d4\\u10d1\\u10e1 \\u10e3\\u10d1\\u10e0\\u10d0\\u10da\\u10dd\\u10d3 \\u10d9\\u10d0\\u10da\\u10dd\\u10e0\\u10d8\\u10d4\\u10d1\\u10d8 */}
               {isPro ? (
                 <View style={styles.topInfoBox}>
                   <View style={styles.infoCol}>
-                    <Text style={styles.infoLabel}>კალორია</Text>
-                    <Text style={styles.calValue}>{resultData.calories} <Text style={styles.calUnit}>კკალ</Text></Text>
+                    <Text style={styles.infoLabel}>\\u10d9\\u10d0\\u10da\\u10dd\\u10e0\\u10d8\\u10d0</Text>
+                    <Text style={styles.calValue}>{resultData.calories} <Text style={styles.calUnit}>\\u10d9\\u10d9\\u10d0\\u10da</Text></Text>
                   </View>
                   <View style={styles.vDivider} />
                   <View style={[styles.infoCol, { flex: 1.2 }]}>
                     <View style={styles.burnHeader}>
                       <Activity size={14} color={DS.danger} style={{ marginRight: 6 }} />
-                      <Text style={styles.infoLabel}>დასაწვავად</Text>
+                      <Text style={styles.infoLabel}>\\u10d3\\u10d0\\u10e1\\u10d0\\u10ec\\u10d5\\u10d0\\u10d5\\u10d0\\u10d3</Text>
                     </View>
-                    <Text style={styles.burnValue}>~{calculateBurnTime(resultData.calories, userWeight)} <Text style={styles.burnUnit}>წთ</Text></Text>
-                    <Text style={styles.burnSubtext}>აღმართზე სიარული</Text>
+                    <Text style={styles.burnValue}>~{calculateBurnTime(resultData.calories, userWeight)} <Text style={styles.burnUnit}>\\u10ec\\u10d7</Text></Text>
+                    <Text style={styles.burnSubtext}>\\u10d0\\u10e6\\u10db\\u10d0\\u10e0\\u10d7\\u10d6\\u10d4 \\u10e1\\u10d8\\u10d0\\u10e0\\u10e3\\u10da\\u10d8</Text>
                   </View>
                 </View>
               ) : (
                 <View style={styles.basicCalBox}>
-                  <Text style={styles.basicCalLabel}>ჯამური კალორია</Text>
-                  <Text style={styles.basicCalValue}>{resultData.calories} <Text style={styles.basicCalUnit}>კკალ</Text></Text>
+                  <Text style={styles.basicCalLabel}>\\u10ef\\u10d0\\u10db\\u10e3\\u10e0\\u10d8 \\u10d9\\u10d0\\u10da\\u10dd\\u10e0\\u10d8\\u10d0</Text>
+                  <Text style={styles.basicCalValue}>{resultData.calories} <Text style={styles.basicCalUnit}>\\u10d9\\u10d9\\u10d0\\u10da</Text></Text>
                 </View>
               )}
 
               <View style={styles.macroHorizontalContainer}>
                 <View style={styles.macroCol}>
-                  <Text style={styles.macroHeader}>ნახშირწყალი</Text>
-                  <View style={styles.macroTrack}><View style={[styles.macroFill, { backgroundColor: DS.warning, width: mw.c as any }]} /></View>
-                  <Text style={styles.macroGrams}>{resultData.carbs}გ</Text>
+                  <Text style={styles.macroHeader}>\\u10dc\\u10d0\\u10e3\\u10e8\\u10d8\\u10e0\\u10ec\\u10e7\\u10d0\\u10da\\u10d8</Text>
+                  <View style={styles.macroTrack}><View style={[styles.macroFill, { backgroundColor: DS.warning, width: mw.c }]} /></View>
+                  <Text style={styles.macroGrams}>{resultData.carbs}\\u10d2</Text>
                 </View>
                 <View style={styles.macroCol}>
-                  <Text style={styles.macroHeader}>ცხიმი</Text>
-                  <View style={styles.macroTrack}><View style={[styles.macroFill, { backgroundColor: DS.danger, width: mw.f as any }]} /></View>
-                  <Text style={styles.macroGrams}>{resultData.fat}გ</Text>
+                  <Text style={styles.macroHeader}>\\u10e1\\u10d8\\u10db\\u10d8</Text>
+                  <View style={styles.macroTrack}><View style={[styles.macroFill, { backgroundColor: DS.danger, width: mw.f }]} /></View>
+                  <Text style={styles.macroGrams}>{resultData.fat}\\u10d2</Text>
                 </View>
                 <View style={styles.macroCol}>
-                  <Text style={styles.macroHeader}>ცილა</Text>
-                  <View style={styles.macroTrack}><View style={[styles.macroFill, { backgroundColor: DS.emerald, width: mw.p as any }]} /></View>
-                  <Text style={styles.macroGrams}>{resultData.protein}გ</Text>
+                  <Text style={styles.macroHeader}>\\u10ea\\u10d8\\u10da\\u10d0</Text>
+                  <View style={styles.macroTrack}><View style={[styles.macroFill, { backgroundColor: DS.emerald, width: mw.p }]} /></View>
+                  <Text style={styles.macroGrams}>{resultData.protein}\\u10d2</Text>
                 </View>
               </View>
 
-              {/* 🍃 AI შეფასება და საინტერესო ფაქტი (Visible to all) */}
-              <View style={styles.insightBoxPremium}>
-                <View style={styles.insightHeaderPremium}>
-                  <Zap size={18} color={DS.emerald} style={{ marginRight: 8 }} />
-                  <Text style={styles.insightTitlePremium}>AI შეფასება</Text>
+              {/* \\ud83c\\udf43 \\u10db\\u10ec\\u10d5\\u10d0\\u10dc\\u10d4 \\u10de\\u10e0\\u10d4\\u10db\\u10d8\\u10e3\\u10db \\u10d0\\u10e6\\u10ec\\u10d4\\u10e0\\u10d8\\u10e1 \\u10d1\\u10d0\\u10e0\\u10d0\\u10d7\\u10d8 */}
+              {resultData.description && (
+                <View style={styles.insightBoxPremium}>
+                  <View style={styles.insightHeaderPremium}>
+                    <Leaf size={18} color={DS.emerald} style={{ marginRight: 8 }} />
+                    <Text style={styles.insightTitlePremium}>Balansi AI \\u10d0\\u10dc\\u10d0\\u10da\\u10d8\\u10d6\\u10d8</Text>
+                  </View>
+                  <Text style={styles.insightTextPremium}>{resultData.description}</Text>
                 </View>
-                <Text style={styles.insightTextPremium}>{resultData.description}</Text>
-              </View>
+              )}
 
-              {resultData.fun_fact && (
+              {isPro && resultData.fun_fact && (
                 <View style={[styles.insightBoxPremium, { backgroundColor: DS.warning + '10', borderColor: DS.warning + '30' }]}>
                   <View style={styles.insightHeaderPremium}>
                     <Lightbulb size={18} color={DS.warning} style={{ marginRight: 8 }} />
-                    <Text style={[styles.insightTitlePremium, { color: DS.warning }]}>საინტერესო ფაქტი</Text>
+                    <Text style={[styles.insightTitlePremium, { color: DS.warning }]}>\\u10d8\\u10ea\\u10dd\\u10d3\\u10d8?</Text>
                   </View>
                   <Text style={[styles.insightTextPremium, { color: DS.inkMid }]}>{resultData.fun_fact}</Text>
                 </View>
@@ -574,9 +585,9 @@ export default function ScannerScreen() {
 
                 <TouchableOpacity style={[styles.logBtn, added && { backgroundColor: DS.emerald }]} onPress={handleAddToDiary} activeOpacity={0.85}>
                   {added ? (
-                    <><CheckCircle size={20} color="#FFF" style={{ marginRight: 8 }} /><Text style={styles.logBtnText}>დამატებულია</Text></>
+                    <><CheckCircle2 size={20} color="#FFF" style={{ marginRight: 8 }} /><Text style={styles.logBtnText}>\\u10d3\\u10d0\\u10db\\u10d0\\u10e2\\u10d4\\u10d1\\u10e3\\u10da\\u10d8\\u10d0</Text></>
                   ) : (
-                    <Text style={styles.logBtnText}>დღიურში დამატება</Text>
+                    <Text style={styles.logBtnText}>\\u10d3\\u10e6\\u10d8\\u10e3\\u10e0\\u10e8\\u10d8 \\u10d3\\u10d0\\u10db\\u10d0\\u10e2\\u10d4\\u10d1\\u10d0</Text>
                   )}
                 </TouchableOpacity>
               </View>
@@ -585,7 +596,7 @@ export default function ScannerScreen() {
         )}
       </Animated.View>
 
-      {/* ── 🚀 THE MASTER PAYWALL (Scanner Edition) 🚀 ── */}
+      {/* \\u2500\u2500 \\ud83d\\ude80 THE MASTER PAYWALL (Scanner Edition) \\ud83d\\ude80 \\u2500\u2500 */}
       <Modal visible={showPaywall} animationType="slide" transparent>
         <View style={pw.overlay}>
           <View style={pw.sheet}>
@@ -594,30 +605,30 @@ export default function ScannerScreen() {
               <Crown size={32} color={DS.gold} />
             </View>
 
-            <Text style={pw.title}>სრული კონტროლი კვებაზე 🔍</Text>
+            <Text style={pw.title}>\\u10e1\\u10e0\\u10e3\\u10da\\u10d8 \\u10d9\\u10dd\\u10dc\\u10e2\\u10e0\\u10dd\\u10da\\u10d8 \\u10d9\\u10d5\\u10d4\\u10d1\\u10d0\\u10d6\\u10d4 \\ud83d\\udd0d</Text>
 
             <Text style={pw.mainText}>
-              გახდი Balansi PRO კლუბის წევრი და დაივიწყე ლიმიტები. გახსენი ულიმიტო ფოტო-ანალიზი, შეფის პროფესიონალური ინსაიტები და MET-კალკულატორი ულუფის დასაწვავად. შენი სხეული იმსახურებს საუკეთესო ტექნოლოგიას – ნუ გაჩერდები მიზნამდე.            </Text>
+              \\u10d2\\u10d0\\u10e5\\u10d3\\u10d8 Balansi PRO \\u10d9\\u10da\\u10e3\\u10d1\\u10d8\\u10e1 \\u10ec\\u10d4\\u10d5\\u10e0\\u10d8 \\u10d3\\u10d0 \\u10d3\\u10d0\\u10d8\\u10d5\\u10d8\\u10ec\\u10e7\\u10d4 \\u10da\\u10d8\\u10db\\u10d8\\u10e2\\u10d4\\u10d1\\u10d8. \\u10d2\\u10d0\\u10ee\\u10e1\\u10d4\\u10dc\\u10d8 \\u10e3\\u10da\\u10d8\\u10db\\u10d8\\u10e2\\u10dd \\u10e4\\u10dd\\u10e2\\u10dd-\\u10d0\\u10dc\\u10d0\\u10da\\u10d8\\u10d6\\u10d8, \\u10e8\\u10d4\\u10e4\\u10d8\\u10e1 \\u10de\\u10e0\\u10dd\\u10e4\\u10d4\\u10e1\\u10d8\\u10dd\\u10dc\\u10d0\\u10da\\u10e3\\u10e0\\u10d8 \\u10d8\\u10dc\\u10e1\\u10d0\\u10d8\\u10e2\\u10d4\\u10d1\\u10d8 \\u10d3\\u10d0 MET-\\u10d9\\u10d0\\u10da\\u10d9\\u10e3\\u10da\\u10d0\\u10e2\\u10dd\\u10e0\\u10d8 \\u10e3\\u10da\\u10e3\\u10e4\\u10d8\\u10e1 \\u10d3\\u10d0\\u10e1\\u10d0\\u10ec\\u10d5\\u10d0\\u10d5\\u10d0\\u10d3. \\u10e8\\u10d4\\u10dc\\u10d8 \\u10e1\\u10ee\\u10d4\\u10e3\\u10da\\u10d8 \\u10d8\\u10db\\u10e1\\u10d0\\u10e3\\u10e0\\u10d4\\u10d1\\u10e1 \\u10e1\\u10d0\\u10e3\\u10d9\\u10d4\\u10d7\\u10d4\\u10e1\\u10dd \\u10e2\\u10d4\\u10e5\\u10dc\\u10dd\\u10da\\u10dd\\u10d2\\u10d8\\u10d0\\u10e1 \\u2013 \\u10dc\\u10e3 \\u10d2\\u10d0\\u10e9\\u10d4\\u10e0\\u10d3\\u10d4\\u10d1\\u10d8 \\u10db\\u10d8\\u10d6\\u10dc\\u10d0\\u10db\\u10d3\\u10d4.            </Text>
 
             <View style={pw.ecosystemBox}>
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-                {/* 🚀 Leaf Icon Added Here 🚀 */}
+                {/* \\ud83d\\ude80 Leaf Icon Added Here \\ud83d\\ude80 */}
                 <Leaf size={16} color={DS.emerald} style={{ marginRight: 6 }} />
-                <Text style={pw.ecosystemTitle}>PRO პრივილეგიები</Text>
+                <Text style={pw.ecosystemTitle}>PRO \\u10de\\u10e0\\u10d8\\u10d5\\u10d8\\u10da\\u10d4\\u10d2\\u10d8\\u10d4\\u10d1\\u10d8</Text>
               </View>
               <Text style={pw.ecosystemText}>
-                ✦ პლუს, მიიღე სრული წვდომა პირად შეფ-მზარეულსა და ექსკლუზიურ ფიტნეს  რეცეპტებზე.
+                \\u2726 \\u10de\\u10da\\u10e3\\u10e1, \\u10db\\u10d8\\u10d8\\u10e6\\u10d4 \\u10e1\\u10e0\\u10e3\\u10da\\u10d8 \\u10ec\\u10d5\\u10d3\\u10dd\\u10db\\u10d0 \\u10de\\u10d8\\u10e0\\u10d0\\u10d3 \\u10e8\\u10d4\\u10e4-\\u10db\\u10d6\\u10d0\\u10e0\\u10d4\\u10e3\\u10da\\u10e1\\u10d0 \\u10d3\\u10d0 \\u10d4\\u10e5\\u10e1\\u10d9\\u10da\\u10e3\\u10d6\\u10d8\\u10e3\\u10e0 \\u10e4\\u10d8\\u10e2\\u10dc\\u10d4\\u10e1  \\u10e0\\u10d4\\u10ea\\u10d4\\u10de\\u10e2\\u10d4\\u10d1\\u10d6\\u10d4.
               </Text>
             </View>
 
             <TouchableOpacity style={pw.buyBtn} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); setShowPaywall(false); router.push('/profile'); }}>
-              <Text style={pw.buyBtnTxt}>აიყვანე შედეგი ახალ ლეველზე 🚀</Text>
+              <Text style={pw.buyBtnTxt}>\\u10d0\\u10d8\\u10e7\\u10d5\\u10d0\\u10dc\\u10d4 \\u10e8\\u10d4\\u10d3\\u10d4\\u10d2\\u10d8 \\u10d0\\u10ee\\u10d0\\u10da \\u10da\\u10d4\\u10d5\\u10d4\\u10da\\u10d6\\u10d4 \\ud83d\\ude80</Text>
             </TouchableOpacity>
 
-            {/* 🚀 Text Clipping Fix & Full Container Buffer 🚀 */}
+            {/* \\ud83d\\ude80 Text Clipping Fix & Full Container Buffer \\ud83d\\ude80 */}
             <View style={pw.cancelWrapper}>
               <TouchableOpacity style={pw.cancelBtn} onPress={() => setShowPaywall(false)}>
-                <Text style={pw.cancelTxt}>არა, მოგვიანებით</Text>
+                <Text style={pw.cancelTxt}>\\u10d0\\u10e0\\u10d0, \\u10db\\u10dd\\u10d2\\u10d5\\u10d8\\u10d0\\u10dc\\u10d4\\u10d1\\u10d8\\u10d7</Text>
               </TouchableOpacity>
             </View>
 
@@ -629,8 +640,8 @@ export default function ScannerScreen() {
   );
 }
 
-// ─── The Master Paywall Styles ───
-const getPwStyles = (DS: any) => StyleSheet.create({
+// \\u2500\u2500\u2500 The Master Paywall Styles \\u2500\u2500\u2500
+const getPwStyles = (DS) => StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.85)',
@@ -674,7 +685,7 @@ const getPwStyles = (DS: any) => StyleSheet.create({
   },
   ecosystemBox: {
     width: '100%',
-    backgroundColor: DS.proBox, // მუქი ჩაშენებული ყუთი 
+    backgroundColor: DS.proBox, // \\u10db\\u10e3\\u10e5\\u10d8 \\u10e9\\u10d0\\u10e8\\u10d4\\u10dc\\u10d4\\u10d1\\u10e3\\u10da\\u10d8 \\u10e7\\u10e3\\u10d7\\u10d8 
     padding: 18,
     borderRadius: 20,
     borderWidth: 1,
@@ -710,7 +721,7 @@ const getPwStyles = (DS: any) => StyleSheet.create({
     marginRight: 4
   },
   cancelWrapper: {
-    minHeight: 50, // 🚀 Prevents clipping on bottom
+    minHeight: 50, // \\ud83d\\ude80 Prevents clipping on bottom
     justifyContent: 'center',
     alignItems: 'center',
     width: '100%'
@@ -724,18 +735,18 @@ const getPwStyles = (DS: any) => StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
     textAlign: 'center',
-    includeFontPadding: false // 🚀 Android Text Fix 🚀
+    includeFontPadding: false // \\ud83d\\ude80 Android Text Fix \\ud83d\\ude80
   }
 });
 
-// ─── Camera Styles (ვერტიკალური, მაცივრისთვის) ───
-const getStyles = (DS: any) => StyleSheet.create({
+// \\u2500\u2500\u2500 Camera Styles (\\u10d5\\u10d4\\u10e0\\u10e2\\u10d8\\u10d9\\u10d0\\u10da\\u10e3\\u10e0\\u10d8, \\u10db\\u10d0\\u10ea\\u10d8\\u10d5\\u10e0\\u10d8\\u10e1\\u10d7\\u10d5\\u10d8\\u10e1) \\u2500\u2500\u2500
+const getStyles = (DS) => StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
   permissionTitle: { color: '#FFF', fontSize: 24, fontWeight: '900', marginBottom: 10 },
   permissionBtn: { backgroundColor: DS.emerald, paddingHorizontal: 30, paddingVertical: 16, borderRadius: 20 },
   permissionBtnText: { color: '#FFF', fontWeight: '900', fontSize: 16 },
 
-  headerSafe: { position: 'absolute', top: 0, width: '100%', zIndex: 10, alignItems: 'center', paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight! + 10 : 20 },
+  headerSafe: { position: 'absolute', top: 0, width: '100%', zIndex: 10, alignItems: 'center', paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight + 10 : 20 },
   headerPill: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 25, borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)', gap: 6 },
   headerPillText: { color: '#FFF', fontWeight: '800', fontSize: 13, letterSpacing: 0.5, textTransform: 'uppercase' },
 
@@ -745,7 +756,7 @@ const getStyles = (DS: any) => StyleSheet.create({
   limitBadge: { marginTop: 15, backgroundColor: 'rgba(245, 158, 11, 0.2)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, borderWidth: 1, borderColor: DS.warning },
   limitText: { color: DS.warning, fontSize: 12, fontWeight: '800' },
 
-  cancelBtnSafe: { position: 'absolute', top: Platform.OS === 'android' ? StatusBar.currentHeight! + 10 : 20, left: 20, zIndex: 20 },
+  cancelBtnSafe: { position: 'absolute', top: Platform.OS === 'android' ? StatusBar.currentHeight + 10 : 20, left: 20, zIndex: 20 },
   cancelBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' },
 
   viewportUi: { position: 'absolute', width: FRAME_SIZE, alignSelf: 'center', zIndex: 10, overflow: 'hidden', borderRadius: 80 },
@@ -783,7 +794,10 @@ const getStyles = (DS: any) => StyleSheet.create({
   sheetHandle: { width: 44, height: 6, backgroundColor: '#D1D5DB', borderRadius: 6, alignSelf: 'center', marginBottom: 25, marginTop: 15 },
   resultImageWrap: { alignSelf: 'center', marginBottom: 25, shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 20, elevation: 12, backgroundColor: '#FFF', padding: 6, borderRadius: 44 },
   resultImage: { width: 160, height: 160, borderRadius: 38, backgroundColor: '#E5E7EB' },
-  foodName: { fontFamily: DS.fontFamily, color: DS.onyx, fontSize: 28, fontWeight: '900', textAlign: 'center', marginBottom: 30, paddingHorizontal: 10, lineHeight: 34, letterSpacing: -0.8 },
+  foodTitleContainer: { alignItems: 'center', marginBottom: 25 },
+  chefBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: DS.emeraldGlow, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, marginBottom: 12, borderWidth: 1, borderColor: DS.emerald + '20' },
+  chefBadgeText: { color: DS.emerald, fontSize: 12, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 },
+  foodName: { fontFamily: DS.fontFamily, color: DS.onyx, fontSize: 28, fontWeight: '900', textAlign: 'center', paddingHorizontal: 10, lineHeight: 34, letterSpacing: -0.8 },
 
   topInfoBox: { flexDirection: 'row', backgroundColor: '#FFF', borderRadius: 30, padding: 24, marginBottom: 28, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 15, elevation: 3 },
   infoCol: { flex: 1, justifyContent: 'center' },
@@ -849,3 +863,10 @@ const getStyles = (DS: any) => StyleSheet.create({
   },
   logBtnText: { fontFamily: DS.fontFamily, color: '#FFF', fontSize: 18, fontWeight: '800', letterSpacing: 0.5 },
 });
+"""
+
+import codecs
+with codecs.open(r"c:\Users\Beka\Desktop\GeoFitApp\GeoFit\app\(tabs)\scanner.tsx", "w", "utf-8") as f:
+    f.write(content)
+
+print("File fixed and restored correctly with UTF-8 encoding.")

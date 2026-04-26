@@ -12,7 +12,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { ArrowLeft, Lock, CheckCircle2, Flame, Sparkles } from 'lucide-react-native';
+import { ArrowLeft, Lock, CheckCircle, Flame, Activity } from 'lucide-react-native';
 import { useThemeStore } from '../store/useThemeStore';
 import { getColors } from '../config/theme';
 import {
@@ -97,7 +97,7 @@ export default function AvatarEditorScreen() {
           <ArrowLeft size={18} color={C.ink} />
         </TouchableOpacity>
         <View style={s.headerCenter}>
-          <Sparkles size={14} color={C.primary} />
+          <Activity size={14} color={C.primary} />
           <Text style={[s.headerTitle, { color: C.ink, fontFamily: font }]}>გარდერობი</Text>
         </View>
         <View style={{ width: 40 }} />
@@ -172,7 +172,7 @@ export default function AvatarEditorScreen() {
                     </Text>
                     {equipped ? (
                       <View style={[s.badge, { backgroundColor: C.primary + '18' }]}>
-                        <CheckCircle2 size={10} color={C.primary} />
+                        <CheckCircle size={10} color={C.primary} />
                         <Text style={[s.badgeText, { color: C.primary, fontFamily: font }]}>ატანილი</Text>
                       </View>
                     ) : !unlocked ? (

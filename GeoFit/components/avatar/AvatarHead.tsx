@@ -4,7 +4,7 @@
 // ──────────────────────────────────────────────────────────────────────────────
 
 import React, { memo } from 'react';
-import Svg, { Circle, Ellipse, Path, G, Line, SvgText } from 'react-native-svg';
+import Svg, { Circle, Ellipse, Path, G, Line } from 'react-native-svg';
 import {
   useAvatarStore,
   MOOD_CONFIGS, ITEM_COLORS,

@@ -16,7 +16,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SERVER_URL as SERVER } from '../../config/api';
 import {
   ArrowLeft, Clock, Flame, Droplet, Wheat,
-  CheckCircle2, ChefHat, Heart, ShoppingCart,
+  CheckCircle, ChefHat, Heart, ShoppingCart,
   X, AlertCircle, Zap, Share2, Bookmark, Award
 } from 'lucide-react-native';
 
@@ -615,7 +615,7 @@ export default function RecipeDetailsScreen() {
               </View>
               {addedToDiary && (
                 <View style={[S.featurePill, { backgroundColor: DS.successGlow, borderColor: 'transparent' }]}>
-                  <CheckCircle2 size={12} color={DS.success} />
+                  <CheckCircle size={12} color={DS.success} />
                   <Text style={[S.featureTxt, { color: DS.success }]}>დამატებულია</Text>
                 </View>
               )}
@@ -727,7 +727,7 @@ export default function RecipeDetailsScreen() {
               <ActivityIndicator color="#FFF" size="small" />
             ) : addedToDiary ? (
               <>
-                <CheckCircle2 size={20} color="#FFF" strokeWidth={2.5} />
+                <CheckCircle size={20} color="#FFF" strokeWidth={2.5} />
                 <Text style={S.ctaBtnTxt}>დაემატა!</Text>
               </>
             ) : (
@@ -788,7 +788,7 @@ export default function RecipeDetailsScreen() {
                     activeOpacity={0.7}
                   >
                     <View style={[S.checkbox, sel && { backgroundColor: DS.emerald, borderColor: DS.emerald }]}>
-                      {sel && <CheckCircle2 size={12} color="#FFF" strokeWidth={3} />}
+                      {sel && <CheckCircle size={12} color="#FFF" strokeWidth={3} />}
                     </View>
                     <Text style={[S.sheetIngName, sel && { color: DS.onyx, fontWeight: '700' }]}>{name}</Text>
                     {!!amt && (

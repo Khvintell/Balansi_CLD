@@ -28,7 +28,7 @@ import {
   ShoppingCart, Trash2,
   X, XCircle, Plus, Minus, ChevronDown, ChevronUp,
   LayoutList, Leaf, ShoppingBag,
-  Search, Check, CheckCircle2, RefreshCw,
+  Search, Check, CheckCircle, RefreshCw,
 } from 'lucide-react-native';
 import { useThemeStore } from '../../store/useThemeStore';
 import { getColors } from '../../config/theme';
@@ -683,7 +683,7 @@ export default function CartScreen() {
                 {/* Flash badge: appears briefly after each successful add */}
                 {lastAdded !== null ? (
                   <View style={[S.autoTag, { backgroundColor: C.primaryLight }]}>
-                    <CheckCircle2 size={11} color={C.primary} />
+                    <CheckCircle size={11} color={C.primary} />
                     <Text style={[S.autoTagTxt, { color: C.primaryDark }]}>
                       "{lastAdded}" დაემატა ✓
                     </Text>

@@ -7,7 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import {
   Crown, Share2, Flame, Droplets, Ruler, Scale,
-  Target, ChevronRight, Sparkles,
+  Target, ChevronRight, Edit2,
 } from 'lucide-react-native';
 
 /**
@@ -183,8 +183,12 @@ export const ProfileHeroCard: React.FC<Props> = ({
 
         {/* Level Badge (top-left of avatar) */}
         <View style={[styles.levelBadge, { backgroundColor: C.primary || '#10B981' }]}>
-          <Sparkles size={9} color="#FFF" fill="#FFF" />
           <Text style={styles.levelBadgeTxt}>Lv.{level}</Text>
+        </View>
+
+        {/* Edit Indicator (top-right of avatar) */}
+        <View style={[styles.editIndicator, { backgroundColor: C.ink || '#0F172A' }]}>
+          <Edit2 size={10} color="#FFF" />
         </View>
       </View>
 
@@ -409,6 +413,22 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     color: '#FFF',
     letterSpacing: 0.3,
+  },
+  editIndicator: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#FFF',
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
   },
   name: {
     fontSize: 22,

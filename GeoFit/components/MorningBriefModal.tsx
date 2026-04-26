@@ -4,7 +4,7 @@ import {
   Animated, Dimensions, Platform,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { X, Sparkles, Activity, Zap, Info } from 'lucide-react-native';
+import { X, Activity, Zap, Info } from 'lucide-react-native';
 import { useBiometricsStore } from '../store/useBiometricsStore';
 
 const { height: SH } = Dimensions.get('window');
@@ -51,7 +51,7 @@ export const MorningBriefModal = ({ visible, onClose }: MorningBriefModalProps) 
             <View style={styles.header}>
               <View style={styles.titleRow}>
                 <View style={styles.iconBg}>
-                  <Sparkles size={24} color="#FFD700" />
+                  <Zap size={24} color="#FFD700" />
                 </View>
                 <Text style={styles.title}>დილის რეპორტი ☀️</Text>
               </View>

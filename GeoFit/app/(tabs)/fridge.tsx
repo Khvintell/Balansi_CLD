@@ -8,6 +8,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useThemeStore } from '../../store/useThemeStore';
+import { useDiaryStore } from '../../store/useDiaryStore';
 import { getColors } from '../../config/theme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SERVER_URL } from '../../config/api';
@@ -22,7 +23,7 @@ import * as Haptics from 'expo-haptics';
 import {
   ChefHat, RotateCcw, ChevronRight, Search, X, Camera, Leaf,
   Clock, Flame, ShoppingCart, Star, CheckCircle, Plus,
-  Image as ImageIcon, Zap, ScanFace, Crown
+  Image as ImageIcon, Zap, ScanFace, Crown, Lock
 } from 'lucide-react-native';
 
 const { width: SW, height: SH } = Dimensions.get('window');
@@ -86,6 +87,7 @@ export default function FridgeScreen() {
   const rc = React.useMemo(() => getRcStyles(C), [C]);
 
   const router = useRouter();
+  const { isPremium } = useDiaryStore();
 
   const [selectedIngs, setSelectedIngs] = useState<string[]>([]);
   const [ingredientSearch, setIngredientSearch] = useState('');
@@ -351,11 +353,23 @@ export default function FridgeScreen() {
       finalUrl = 'https://via.placeholder.com/200';
     }
 
+    const cat = String(recipe.category || '').trim();
+    let isRecipePro = cat === 'სოუსები' || cat === 'წახემსება';
+
+    const handlePress = () => {
+      if (isRecipePro && !isPremium) {
+        if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        router.push('/paywall');
+        return;
+      }
+      router.push(`/details/${recipe.id}`);
+    };
+
     return (
       <TouchableOpacity
         style={rc.card}
         activeOpacity={0.8}
-        onPress={() => { router.push(`/details/${recipe.id}`); }}
+        onPress={handlePress}
       >
         <View style={rc.imgContainer}>
           <Image
@@ -365,6 +379,30 @@ export default function FridgeScreen() {
             transition={300}
             cachePolicy="disk"
           />
+          {isRecipePro && !isPremium && (
+            <View style={{ 
+              position: 'absolute', 
+              top: 6, 
+              left: 6, 
+              backgroundColor: 'rgba(255,255,255,0.9)', 
+              paddingHorizontal: 6, 
+              paddingVertical: 3, 
+              borderRadius: 8, 
+              zIndex: 10,
+              flexDirection: 'row',
+              alignItems: 'center',
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.1,
+              shadowRadius: 2,
+              elevation: 2,
+              borderWidth: 1,
+              borderColor: 'rgba(255,215,0,0.3)'
+            }}>
+              <Crown size={10} color="#D4AF37" fill="#D4AF37" style={{ marginRight: 3 }} />
+              <Text style={{ fontSize: 9, fontWeight: '900', color: '#B8860B', letterSpacing: 0.3 }}>PRO</Text>
+            </View>
+          )}
         </View>
         <View style={rc.body}>
           <Text style={rc.name} numberOfLines={2}>{recipe.name}</Text>

@@ -12,7 +12,7 @@ from core.config import settings
 router = APIRouter(tags=["ai"])
 
 genai.configure(api_key=settings.GOOGLE_API_KEY)
-model = genai.GenerativeModel('gemini-2.0-flash')
+model = genai.GenerativeModel('gemini-flash-latest')
 
 
 def extract_json(ai_text: str):
@@ -95,9 +95,11 @@ async def scan_food_macro(file: UploadFile = File(...)):
 
         prompt = """
         Identify food and estimate macros for the portion. Return ONLY JSON.
+        Language: Georgian.
         {
-            "name": "Georgian Name",
-            "description": "Appetizing description in Georgian",
+            "name": "კერძის სახელი",
+            "description": "მოკლე AI შეფასება: რამდენად კარგია კერძი, რას შეიცავს და რატომ არის სასარგებლო (პროფესიონალური და მინიმალისტური)",
+            "fun_fact": "ერთი მინიმალისტური და ძალიან საინტერესო ფაქტი ნებისმიერ ინგრედიენტზე, რომელიც ფოტოშია",
             "calories": int, "protein": int, "carbs": int, "fat": int
         }
         If no food, return {"error": "no_food"}

@@ -63,7 +63,7 @@ export const useBioSync = () => {
       }
       
       // Force AI call if sleep is critical (< 300 mins) to ensure UX visibility
-      if (healthData.sleep_duration_minutes < 300 && !lastSleepSyncDate) {
+      if (healthData.sleepMinutes < 300 && !lastSleepSyncDate) {
         shouldCallAI = true;
         syncReason.push("Critical Sleep Deprivation detected");
       }
@@ -72,9 +72,9 @@ export const useBioSync = () => {
 
       // Update basic local stats regardless
       setLatestBiometrics({
-        steps: healthData.step_count,
-        burned: healthData.active_energy_burned,
-        sleepMinutes: healthData.sleep_duration_minutes
+        steps: healthData.steps,
+        burned: healthData.burned,
+        sleepMinutes: healthData.sleepMinutes
       });
 
       if (shouldCallAI) {

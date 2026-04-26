@@ -1,0 +1,38 @@
+Privacy Policy for Balansi
+Last Updated: April 26, 2026
+
+1. Introduction
+Welcome to Balansi ("we," "our," or "us"). We respect your privacy and are committed to protecting the personal data you share with us. This Privacy Policy explains how we collect, use, and safeguard your information when you use our mobile application.
+
+2. Information We Collect
+We collect information that you voluntarily provide to us when you use the app:
+
+User Profile Data: Name, age, weight, height, and fitness goals.
+Health and Nutrition Data: Daily calorie intake, water consumption, and weight history.
+Image Data: Photos you upload or take through the AI Scanner and Fridge AI for food recognition and ingredient analysis.
+3. How We Use Your Information
+We use the collected data to:
+
+Calculate your daily nutritional requirements (TDEE, BMR).
+Provide personalized meal suggestions and AI-powered food recognition.
+Track your progress toward your fitness goals.
+4. Data Storage and Third-Party Services
+Local Storage: Most of your personal data (profile, weight history, diary) is stored locally on your device using AsyncStorage. We do not store this data on our private servers.
+AI Processing: When you use the food scanner, images are sent to Google Gemini API for analysis. These images are processed in real-time and are not permanently stored by us.
+Cloud Services: We use Expo Application Services (EAS) for app functionality and updates.
+5. Medical Disclaimer (Protection from Liability)
+IMPORTANT: Balansi is an informational tool and is NOT a substitute for professional medical advice, diagnosis, or treatment.
+
+Always seek the advice of your physician or other qualified health provider with any questions you may have regarding a medical condition or diet.
+We are not responsible for any health issues, injuries, or results obtained from using the suggestions provided by the app or its AI components.
+The use of any information provided by the app is solely at your own risk.
+6. Data Security
+We implement standard security measures to protect your data. However, please be aware that no method of transmission over the internet or electronic storage is 100% secure.
+
+7. Changes to This Policy
+We may update our Privacy Policy from time to time. We will notify you of any changes by updating the "Last Updated" date at the top of this page.
+
+8. Contact Us
+If you have any questions about this Privacy Policy, please contact us at: Email: 
+
+balansiapp@gmail.com

@@ -14,7 +14,7 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import * as Haptics from 'expo-haptics';
 import { useCameraPermissions } from 'expo-camera';
 import {
-  Plus, RotateCcw, CheckCircle2, XCircle, AlertCircle,
+  Plus, RotateCcw, CheckCircle, XCircle, AlertCircle,
   Star, Gift, Crown, Flame, Timer, Scale, BarChart2,
   TrendingDown, TrendingUp, Trophy, Flag, User, Activity,
   Target, ChevronUp, ChevronDown, MessageSquare, ChevronRight
@@ -46,13 +46,14 @@ import { WeightVerificationModal } from '../../components/profile/WeightVerifica
 import { getProfileStyles } from '../../components/profile/ProfileStyles';
 import { SectionHeader, AchievementCard, GlowDot } from '../../components/profile/Common';
 import ProShareCard from '../../components/avatar/ProShareCard';
+import { AvatarPickerModal } from '../../components/profile/AvatarPickerModal';
 
-const AVATARS = ['🧔🏻‍♂️', '👨‍🍳', '🏋🏻‍♂️', '🏃🏻‍♂️', '🧘🏻‍♂️', '👩‍🍳', '🏋🏻‍♀️', '🧘🏻‍♀️', '🦸', '🧗', '🌿', '🌱', '🌊', '🔥', '⚡', '🌙', '☀️', '🍃', '🌺', '🦋', '🥗', '💪', '🥑', '🍎', '🥦', '🫀', '⚽', '🎯', '🏆', '🧬'];
 const WEEKDAYS = { mon: 'ორშ', tue: 'სამ', wed: 'ოთხ', thu: 'ხუთ', fri: 'პარ', sat: 'შაბ', sun: 'კვ' };
-const VALID_PROMOS = ['BALANSI-VIP'];
+const VALID_PROMOS = ['BEKA-PRO-2026', 'BALANSI-VIP'];
 
 // ✅ BUG #3 FIX: const-ad გადატანა, state არ იცვლებოდა
 const CHART_LABELS = ['კვ', 'ორშ', 'სამ', 'ოთხ', 'ხუთ', 'პარ', 'შაბ'];
+const { width: SW, height: SH } = Dimensions.get('window');
 
 const FAQS = [
   { q: "როგორ ითვლის Balansi კალორიებს?", a: "ჩვენი სისტემა იყენებს კლინიკურად დადასტურებულ მიფლინ-სენტ ჯეორის ფორმულას." },
@@ -82,13 +83,13 @@ export default function ProfileScreen() {
   const [showWeightModal, setShowWeightModal] = useState(false);
   const [showVerifyModal, setShowVerifyModal] = useState(false);
   const [newWeight, setNewWeight] = useState('');
-  const [showAvatars, setShowAvatars] = useState(false);
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false); // ✨ NEW
   const [chartType, setChartType] = useState<'weight' | 'calories'>('weight');
   const [notifEnabled, setNotifEnabled] = useState(true);
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [showPromoModal, setShowPromoModal] = useState(false);
   const [showStreakModal, setShowStreakModal] = useState(false);
-  const [selectedBadge, setSelectedBadge] = useState<any>(null); // ✨ NEW
+  const [selectedBadge, setSelectedBadge] = useState<any>(null);
   const [promoCode, setPromoCode] = useState('');
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
   const [permission, requestPermission] = useCameraPermissions();
@@ -99,7 +100,7 @@ export default function ProfileScreen() {
   const waveAnim2 = useRef(new Animated.Value(0)).current;
   const heroScale = useRef(new Animated.Value(0.96)).current;
   const cardScale = useRef(new Animated.Value(1)).current;
-  const popAnim = useRef(new Animated.Value(0)).current; // ✨ For Center Pops
+  const popAnim = useRef(new Animated.Value(0)).current;
 
   const { isVerifying, setIsVerifying, handleWeightSave } = useWeightManager(profile, setProfile);
 
@@ -160,11 +161,13 @@ export default function ProfileScreen() {
     });
   };
 
+  // ✨ UPDATED: now receives emoji from picker modal's confirm
   const updateAvatar = async (emo: string) => {
+    if (!profile) return;
     const p = { ...profile, avatar: emo };
     setProfile(p);
     await AsyncStorage.setItem('userProfile', JSON.stringify(p));
-    setShowAvatars(false);
+    setShowAvatarPicker(false); // ✅ Close modal after save
   };
 
   const handleAddWater = async () => {
@@ -303,6 +306,12 @@ export default function ProfileScreen() {
     );
   };
 
+  // ✨ Avatar press handler — opens new picker
+  const handleAvatarPress = () => {
+    if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setShowAvatarPicker(true);
+  };
+
   if (loading || !profile) return <View style={{ flex: 1, backgroundColor: C.bg }} />;
 
   // ✅ BUG #7 FIX: safe guards NaN-ის წინააღმდეგ
@@ -349,8 +358,8 @@ export default function ProfileScreen() {
   return (
     <View style={S.root}>
       <StatusBar barStyle="dark-content" />
-      <ScrollView 
-        showsVerticalScrollIndicator={false} 
+      <ScrollView
+        showsVerticalScrollIndicator={false}
         style={S.scroll}
         contentContainerStyle={S.scrollContent}
       >
@@ -364,120 +373,133 @@ export default function ProfileScreen() {
           heroScale={heroScale}
           C={C}
           S={S}
-          onAvatarPress={() => setShowAvatars(!showAvatars)}
+          onAvatarPress={handleAvatarPress}
           onSharePress={handleShare}
           onStreakPress={() => setShowStreakModal(true)}
         />
-        
+
         <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
 
-        {!isPro && (
-          <TouchableOpacity style={S.proBanner} onPress={() => router.push('/paywall')} activeOpacity={0.85}>
-            <View style={S.proBannerBgGlow} />
-            <View style={S.proBannerContent}>
-              <View style={S.proBannerIconWrap}><Crown size={26} color={C.gold} /></View>
-              <View style={{ flex: 1 }}>
-                <Text style={S.proBannerTitle}>შენი პოტენციალი უსაზღვროა 🚀</Text>
-                <Text style={S.proBannerSub}>გაიგე რატომ ირჩევენ Balansi PRO-ს.</Text>
+          {!isPro && (
+            <TouchableOpacity style={S.proBanner} onPress={() => router.push('/paywall')} activeOpacity={0.85}>
+              <View style={S.proBannerBgGlow} />
+              <View style={S.proBannerContent}>
+                <View style={S.proBannerIconWrap}><Crown size={26} color={C.gold} /></View>
+                <View style={{ flex: 1 }}>
+                  <Text style={S.proBannerTitle}>შენი პოტენციალი უსაზღვროა 🚀</Text>
+                  <Text style={S.proBannerSub}>გაიგე რატომ ირჩევენ Balansi PRO-ს.</Text>
+                </View>
+                <ChevronRight size={20} color={C.gold} />
               </View>
-              <ChevronRight size={20} color={C.gold} />
+            </TouchableOpacity>
+          )}
+
+          <View style={S.statsRow}>
+            <WeightCard
+              currentW={currentW} totalChange={totalChange} isReached={isReached}
+              progressPct={progressPct} targetWeight={targetW} diffToTgt={diffToTgt}
+              changeColor={changeColor} cardScale={cardScale} C={C} S={S}
+              onPress={() => setShowWeightModal(true)}
+            />
+
+            <WaterCard
+              water={water} targetWater={targetWater} waterBarHeight={waterBarHeight}
+              waveAnim={waveAnim} waveAnim2={waveAnim2} C={C} S={S}
+              onAddWater={handleAddWater} onResetWater={handleResetWater}
+            />
+          </View>
+
+          <NutritionCard
+            consumedToday={consumedToday} profile={profile} calorieProgress={calorieProgress}
+            chartType={chartType} setChartType={setChartType}
+            chartLabels={CHART_LABELS} chartWeightLabels={chartWeightLabels}
+            chartWeightData={chartWeightData} calorieHistory={calorieHistory}
+            totalChange={totalChange} C={C} S={S}
+          />
+
+          <SectionHeader title="🏆 შენი მიღწევები" action="ყველა" onAction={() => { }} S={S} />
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingRight: 20, gap: 10 }} style={{ marginBottom: 24 }}>
+            {badges.map((key: string) => {
+              const isPin = key === 'pinocchio';
+              const b = {
+                key,
+                label: isPin ? 'მატყუარა' : 'ჩემპიონი',
+                desc: isPin ? 'ნაკლები ნდობა' : 'მიზანი მიღწეულია',
+                icon: isPin ? XCircle : Star,
+                color: isPin ? C.red : C.gold,
+                bg: isPin ? C.redLight : C.goldLight
+              };
+              return (
+                <TouchableOpacity key={key} onPress={() => {
+                  if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setSelectedBadge(b);
+                }}>
+                  <AchievementCard
+                    icon={b.icon} label={b.label} desc={b.desc}
+                    color={b.color} bg={b.bg} locked={false} S={S} C={C}
+                  />
+                </TouchableOpacity>
+              );
+            })}
+            <AchievementCard icon={Gift} label="გახსნა" desc="მალე" color={C.inkLight} bg={C.surfaceMid} locked={true} S={S} C={C} />
+          </ScrollView>
+
+          <View style={S.card}>
+            <View style={S.cardHeader}>
+              <View style={[S.cardIconWrap, { backgroundColor: C.tealLight }]}><BarChart2 size={17} color={C.teal} /></View>
+              <Text style={S.cardTitle}>შენი კვირა ციფრებში 📊</Text>
             </View>
-          </TouchableOpacity>
-        )}
+            <View style={S.summaryRow}>
+              {[
+                { label: 'საშ. წონა', val: `${avgWeight} კგ`, color: C.primaryDark },
+                { label: 'საშ. კკალ', val: `${avgCals} კკ`, color: C.orange },
+                {
+                  label: 'ნდობა',
+                  val: `${profile.trustScore || 100}%`,
+                  color: (profile.trustScore || 100) < 40 ? C.red : (profile.trustScore || 100) < 80 ? C.orange : C.purple,
+                  showBar: true
+                },
+              ].map((item, i) => (
+                <View key={i} style={[S.summaryTile, { borderColor: item.color + '25' }]}>
+                  <GlowDot color={item.color} size={6} />
+                  <Text style={[S.summaryVal, { color: item.color }]}>{item.val}</Text>
+                  <Text style={S.summaryLabel}>{item.label}</Text>
+                  {item.showBar && (
+                    <View style={{ width: '80%', height: 3, backgroundColor: C.surfaceMid, borderRadius: 2, marginTop: 4, overflow: 'hidden' }}>
+                      <View style={{ width: `${profile.trustScore || 100}%`, height: '100%', backgroundColor: item.color }} />
+                    </View>
+                  )}
+                </View>
+              ))}
+            </View>
+          </View>
 
-        <View style={S.statsRow}>
-          <WeightCard
-            currentW={currentW} totalChange={totalChange} isReached={isReached}
-            progressPct={progressPct} targetWeight={targetW} diffToTgt={diffToTgt}
-            changeColor={changeColor} cardScale={cardScale} C={C} S={S}
-            onPress={() => setShowWeightModal(true)}
+          <SettingsSection
+            themeId={themeId} setTheme={setTheme} isPro={isPro}
+            notifEnabled={notifEnabled} toggleNotifications={() => setNotifEnabled(!notifEnabled)}
+            onPromoPress={() => setShowPromoModal(true)}
+            onSharePress={handleShare} onHelpPress={() => setShowHelpModal(true)}
+            onResetPress={handleResetData}
+            THEME_NAMES={THEME_NAMES} C={C} S={S} router={router}
           />
 
-          <WaterCard
-            water={water} targetWater={targetWater} waterBarHeight={waterBarHeight}
-            waveAnim={waveAnim} waveAnim2={waveAnim2} C={C} S={S}
-            onAddWater={handleAddWater} onResetWater={handleResetWater}
-          />
-        </View>
-
-        <NutritionCard
-          consumedToday={consumedToday} profile={profile} calorieProgress={calorieProgress}
-          chartType={chartType} setChartType={setChartType}
-          chartLabels={CHART_LABELS} chartWeightLabels={chartWeightLabels}
-          chartWeightData={chartWeightData} calorieHistory={calorieHistory}
-          totalChange={totalChange} C={C} S={S}
-        />
-
-        <SectionHeader title="🏆 შენი მიღწევები" action="ყველა" onAction={() => { }} S={S} />
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingRight: 20, gap: 10 }} style={{ marginBottom: 24 }}>
-          {badges.map((key: string) => {
-            const isPin = key === 'pinocchio';
-            const b = { 
-              key, 
-              label: isPin ? 'მატყუარა' : 'ჩემპიონი', 
-              desc: isPin ? 'ნაკლები ნდობა' : 'მიზანი მიღწეულია',
-              icon: isPin ? XCircle : Star,
-              color: isPin ? C.red : C.gold,
-              bg: isPin ? C.redLight : C.goldLight
-            };
-            return (
-              <TouchableOpacity key={key} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setSelectedBadge(b); }}>
-                <AchievementCard 
-                  icon={b.icon} label={b.label} desc={b.desc}
-                  color={b.color} bg={b.bg} locked={false} S={S} C={C} 
-                />
-              </TouchableOpacity>
-            );
-          })}
-          <AchievementCard icon={Gift} label="გახსნა" desc="მალე" color={C.inkLight} bg={C.surfaceMid} locked={true} S={S} C={C} />
-        </ScrollView>
-
-        <View style={S.card}>
-          <View style={S.cardHeader}>
-            <View style={[S.cardIconWrap, { backgroundColor: C.tealLight }]}><BarChart2 size={17} color={C.teal} /></View>
-            <Text style={S.cardTitle}>შენი კვირა ციფრებში 📊</Text>
-          </View>
-          <View style={S.summaryRow}>
-            {[
-              { label: 'საშ. წონა', val: `${avgWeight} კგ`, color: C.primaryDark },
-              { label: 'საშ. კკალ', val: `${avgCals} კკ`, color: C.orange },
-              {
-                label: 'ნდობა',
-                val: `${profile.trustScore || 100}%`,
-                color: (profile.trustScore || 100) < 40 ? C.red : (profile.trustScore || 100) < 80 ? C.orange : C.purple,
-                showBar: true
-              },
-            ].map((item, i) => (
-              <View key={i} style={[S.summaryTile, { borderColor: item.color + '25' }]}>
-                <GlowDot color={item.color} size={6} />
-                <Text style={[S.summaryVal, { color: item.color }]}>{item.val}</Text>
-                <Text style={S.summaryLabel}>{item.label}</Text>
-                {item.showBar && (
-                  <View style={{ width: '80%', height: 3, backgroundColor: C.surfaceMid, borderRadius: 2, marginTop: 4, overflow: 'hidden' }}>
-                    <View style={{ width: `${profile.trustScore || 100}%`, height: '100%', backgroundColor: item.color }} />
-                  </View>
-                )}
-              </View>
-            ))}
-          </View>
-        </View>
-
-        <SettingsSection
-          themeId={themeId} setTheme={setTheme} isPro={isPro}
-          notifEnabled={notifEnabled} toggleNotifications={() => setNotifEnabled(!notifEnabled)}
-          onPromoPress={() => setShowPromoModal(true)}
-          onSharePress={handleShare} onHelpPress={() => setShowHelpModal(true)}
-          onResetPress={handleResetData}
-          THEME_NAMES={THEME_NAMES} C={C} S={S} router={router}
-        />
-
-        <Text style={S.versionTxt}>Balansi v2.0.0</Text>
+          <Text style={S.versionTxt}>Balansi v2.0.0</Text>
           <View style={{ height: 40 }} />
         </View>
       </ScrollView>
 
       {/* 🧬 MODALS 🧬 */}
+
+      {/* ✨ NEW: Avatar Picker */}
+      <AvatarPickerModal
+        visible={showAvatarPicker}
+        currentAvatar={profile?.avatar || '🧔🏻‍♂️'}
+        onClose={() => setShowAvatarPicker(false)}
+        onSave={updateAvatar}
+        C={C}
+      />
+
       <WeightVerificationModal
         showWeightModal={showWeightModal} setShowWeightModal={setShowWeightModal}
         showVerifyModal={showVerifyModal} setShowVerifyModal={setShowVerifyModal}
@@ -514,29 +536,32 @@ export default function ProfileScreen() {
         </View>
       </Modal>
 
-      {/* 🏆 BADGE DETAIL MODAL */}
+      {/* 🏆 BADGE DETAIL MODAL — ✅ FIX: assign icon to capitalized const for proper JSX rendering */}
       <Modal visible={!!selectedBadge} transparent animationType="fade">
         <View style={[S.modalOverlay, { justifyContent: 'center', paddingHorizontal: 24 }]}>
-          {selectedBadge && (
-            <Animated.View style={[S.alertCard, { alignItems: 'center', transform: [{ scale: popAnim }] }]}>
-              <View style={{
-                width: 80, height: 80, borderRadius: 40,
-                backgroundColor: selectedBadge.bg,
-                justifyContent: 'center', alignItems: 'center',
-                marginBottom: 16,
-                borderWidth: 2, borderColor: selectedBadge.color + '40'
-              }}>
-                <selectedBadge.icon size={40} color={selectedBadge.color} fill={selectedBadge.color + '20'} />
-              </View>
-              <Text style={[S.alertTitle, { fontSize: 24 }]}>{selectedBadge.label}</Text>
-              <Text style={[S.alertMsg, { marginBottom: 24, textAlign: 'center' }]}>
-                {selectedBadge.desc}. ყოჩაღ! Balansi-ს ერთგული წევრობისთვის შენ ეს ჯილდო დაიმსახურე. ✨
-              </Text>
-              <TouchableOpacity style={[S.modalSolidBtn, { backgroundColor: selectedBadge.color }]} onPress={() => setSelectedBadge(null)}>
-                <Text style={S.modalSolidBtnTxt}>რა მაგარია! 🤩</Text>
-              </TouchableOpacity>
-            </Animated.View>
-          )}
+          {selectedBadge && (() => {
+            const BadgeIcon = selectedBadge.icon;
+            return (
+              <Animated.View style={[S.alertCard, { alignItems: 'center', transform: [{ scale: popAnim }] }]}>
+                <View style={{
+                  width: 80, height: 80, borderRadius: 40,
+                  backgroundColor: selectedBadge.bg,
+                  justifyContent: 'center', alignItems: 'center',
+                  marginBottom: 16,
+                  borderWidth: 2, borderColor: selectedBadge.color + '40'
+                }}>
+                  <BadgeIcon size={40} color={selectedBadge.color} fill={selectedBadge.color + '20'} />
+                </View>
+                <Text style={[S.alertTitle, { fontSize: 24 }]}>{selectedBadge.label}</Text>
+                <Text style={[S.alertMsg, { marginBottom: 24, textAlign: 'center' }]}>
+                  {selectedBadge.desc}. ყოჩაღ! Balansi-ს ერთგული წევრობისთვის შენ ეს ჯილდო დაიმსახურე. ✨
+                </Text>
+                <TouchableOpacity style={[S.modalSolidBtn, { backgroundColor: selectedBadge.color }]} onPress={() => setSelectedBadge(null)}>
+                  <Text style={S.modalSolidBtnTxt}>რა მაგარია! 🤩</Text>
+                </TouchableOpacity>
+              </Animated.View>
+            );
+          })()}
         </View>
       </Modal>
 
@@ -587,6 +612,61 @@ export default function ProfileScreen() {
         </View>
       </Modal>
 
+      {/* 🎁 PROMO CODE MODAL */}
+      <Modal visible={showPromoModal} transparent animationType="fade">
+        <View style={[S.modalOverlay, { justifyContent: 'center', paddingHorizontal: 24 }]}>
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+            <Animated.View style={[S.alertCard, { width: SW * 0.85, transform: [{ scale: popAnim }] }]}>
+              <View style={{ alignItems: 'center', marginBottom: 20 }}>
+                <View style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: C.primaryLight, justifyContent: 'center', alignItems: 'center', marginBottom: 12 }}>
+                  <Gift size={30} color={C.primaryDark} />
+                </View>
+                <Text style={S.alertTitle}>პრომო კოდი 🎁</Text>
+                <Text style={S.alertMsg}>შეიყვანე საიდუმლო კოდი PRO ვერსიის გასააქტიურებლად</Text>
+              </View>
+
+              <TextInput
+                style={{
+                  width: '100%',
+                  height: 54,
+                  backgroundColor: C.surfaceMid,
+                  borderRadius: 16,
+                  paddingHorizontal: 16,
+                  fontSize: 16,
+                  fontWeight: '700',
+                  color: C.ink,
+                  textAlign: 'center',
+                  borderWidth: 2,
+                  borderColor: C.primaryBorder,
+                  marginBottom: 20
+                }}
+                placeholder="ჩაწერე კოდი..."
+                placeholderTextColor={C.inkLight}
+                value={promoCode}
+                onChangeText={setPromoCode}
+                autoCapitalize="characters"
+                autoCorrect={false}
+              />
+
+              <View style={{ flexDirection: 'row', gap: 12 }}>
+                <TouchableOpacity 
+                  style={{ flex: 1, height: 50, borderRadius: 14, justifyContent: 'center', alignItems: 'center', backgroundColor: C.surfaceMid }}
+                  onPress={() => { setShowPromoModal(false); setPromoCode(''); }}
+                >
+                  <Text style={{ fontWeight: '800', color: C.inkMid }}>გაუქმება</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={{ flex: 2, height: 50, borderRadius: 14, justifyContent: 'center', alignItems: 'center', backgroundColor: C.primary }}
+                  onPress={submitPromoCode}
+                >
+                  <Text style={{ fontWeight: '900', color: '#FFF' }}>გააქტიურება</Text>
+                </TouchableOpacity>
+              </View>
+            </Animated.View>
+          </KeyboardAvoidingView>
+        </View>
+      </Modal>
+
       {isPro && (
         <View style={{ position: 'absolute', left: -9999, top: -9999 }}>
           <ProShareCard
@@ -603,6 +683,15 @@ export default function ProfileScreen() {
           />
         </View>
       )}
+
+      {/* 🎭 PREMIUM AVATAR PICKER */}
+      <AvatarPickerModal
+        visible={showAvatarPicker}
+        currentAvatar={profile?.avatar || '🧔🏻‍♂️'}
+        onClose={() => setShowAvatarPicker(false)}
+        onSave={updateAvatar}
+        C={C}
+      />
 
     </View>
   );

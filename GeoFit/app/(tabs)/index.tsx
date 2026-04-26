@@ -32,8 +32,8 @@ import {
   Search, Flame, Clock, Zap, Star, Activity,
   Heart, PieChart, ArrowLeft, ChevronRight,
   Dumbbell, WifiOff, Database, RotateCcw, RefreshCw,
-  AlertCircle, CheckCircle2, XCircle, Lock, Sparkles, Lightbulb,
-  TrendingDown, Target,
+  AlertCircle, CheckCircle, XCircle, Lock, Lightbulb,
+  TrendingDown, Target, Crown
 } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { useAvatarStore } from '../../store/useAvatarStore';
@@ -422,8 +422,26 @@ export default function HomeScreen() {
   const styles = useMemo(() => getStyles(T), [T]);
 
   const router = useRouter();
-  const { intake } = useDiaryStore();
+  const { intake, isPremium, setPremium } = useDiaryStore();
   const { computeMood } = useAvatarStore();
+
+  useEffect(() => {
+    if (isPremium) {
+      setPremium(false);
+    }
+    // Force reset isPro in AsyncStorage for MVP lock testing
+    AsyncStorage.getItem('userProfile').then(saved => {
+      if (saved) {
+        try {
+          const p = JSON.parse(saved);
+          if (p.isPro) {
+            p.isPro = false;
+            AsyncStorage.setItem('userProfile', JSON.stringify(p));
+          }
+        } catch {}
+      }
+    });
+  }, [isPremium, setPremium]);
 
   const [recipes, setRecipes] = useState<any[]>([]);
   const [activeCategory, setActiveCategory] = useState('აღმოაჩინე');
@@ -448,11 +466,15 @@ export default function HomeScreen() {
   const getHeartScale = (id: string) => { if (!heartScales[id]) heartScales[id] = new Animated.Value(1); return heartScales[id]; };
   const scrollY = useRef(new Animated.Value(0)).current;
   const categoryScrollRef = useRef<ScrollView>(null);
-  const pagerRef = useRef<PagerView>(null);
+  const pagerRef = useRef<typeof PagerView>(null);
   const mainScrollRef = useRef<any>(null);
   const headerOpacity = scrollY.interpolate({ inputRange: [0, 80, 150], outputRange: [1, 0.5, 0], extrapolate: 'clamp' });
 
-  useEffect(() => { computeMood(intake?.calories || 0, targetCalories || 2000, 0, 8); }, [intake, targetCalories]);
+  useEffect(() => { 
+    const todayStr = new Date().toISOString().split('T')[0];
+    const safeConsumed = Math.round(intake[todayStr]?.calories || 0);
+    computeMood(safeConsumed, targetCalories || 2000, 0, 8); 
+  }, [intake, targetCalories]);
 
   useFocusEffect(useCallback(() => {
     loadDataSafely();
@@ -508,10 +530,16 @@ export default function HomeScreen() {
 
       try {
         const s = await AsyncStorage.getItem('trendingData');
-        if (s) { const td = JSON.parse(s); if (Date.now() - td.timestamp < TRENDING_TTL) t = list.filter((r: any) => td.ids.includes(r.id)); }
+        if (s) { 
+          const td = JSON.parse(s); 
+          if (Date.now() - td.timestamp < TRENDING_TTL) {
+            t = list.filter((r: any) => td.ids.includes(r.id) && String(r.category || '').trim() !== 'სოუსები'); 
+          }
+        }
       } catch { }
       if (t.length < 5) {
-        t = [...list].sort(() => 0.5 - Math.random()).slice(0, 6);
+        const pool = list.filter((r: any) => String(r.category || '').trim() !== 'სოუსები');
+        t = [...pool].sort(() => 0.5 - Math.random()).slice(0, 6);
         AsyncStorage.setItem('trendingData', JSON.stringify({ timestamp: Date.now(), ids: t.map((r: any) => r.id) }));
       }
       setTrendingRecipes(t);
@@ -612,6 +640,26 @@ export default function HomeScreen() {
     </View>
   );
 
+  const isRecipePro = useCallback((recipe: any) => {
+    if (!recipe) return false;
+    const cat = String(recipe.category || '').trim();
+    if (cat === 'სოუსები' || cat === 'წახემსება') return true;
+
+    // Only block recipes that are explicitly in the High Protein section
+    return highProteinRecipes.some(r => String(r?.id) === String(recipe.id));
+  }, [highProteinRecipes]);
+
+  const handleRecipePress = useCallback((recipe: any) => {
+    if (!recipe) return;
+    if (isRecipePro(recipe) && !isPremium) {
+      if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      router.push('/paywall');
+      return;
+    }
+    if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push(`/details/${recipe.id}`);
+  }, [isPremium, isRecipePro, router]);
+
   const renderGridCard = useCallback((recipe: any, idx: number) => {
     if (!recipe) return null;
     const rId = recipe.id?.toString() || recipe.name;
@@ -622,7 +670,7 @@ export default function HomeScreen() {
         key={idx}
         style={styles.gridCard}
         activeOpacity={0.85}
-        onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push(`/details/${recipe.id}`); }}
+        onPress={() => handleRecipePress(recipe)}
       >
         <Image
           source={{ uri: recipe.image_url || 'https://via.placeholder.com/150' }}
@@ -631,6 +679,30 @@ export default function HomeScreen() {
           transition={250}
           placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
         />
+        {isRecipePro(recipe) && !isPremium && (
+          <View style={{ 
+            position: 'absolute', 
+            top: 10, 
+            left: 10, 
+            backgroundColor: 'rgba(255,255,255,0.9)', 
+            paddingHorizontal: 8, 
+            paddingVertical: 5, 
+            borderRadius: 10, 
+            zIndex: 10,
+            flexDirection: 'row',
+            alignItems: 'center',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.15,
+            shadowRadius: 4,
+            elevation: 3,
+            borderWidth: 1,
+            borderColor: 'rgba(255,215,0,0.3)'
+          }}>
+            <Crown size={12} color="#D4AF37" fill="#D4AF37" style={{ marginRight: 4 }} />
+            <Text style={{ fontSize: 10, fontWeight: '900', color: '#B8860B', letterSpacing: 0.5 }}>PRO</Text>
+          </View>
+        )}
         <TouchableOpacity style={styles.heartBtnGrid} onPress={() => toggleFavorite(rId)} activeOpacity={0.8}>
           <Animated.View style={{ transform: [{ scale }] }}>
             <Heart size={18} color={isFav ? T.danger : '#FFF'} fill={isFav ? T.danger : 'rgba(0,0,0,0.3)'} />
@@ -735,7 +807,7 @@ export default function HomeScreen() {
                   key={idx}
                   style={styles.trendingCard}
                   activeOpacity={0.88}
-                  onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push(`/details/${recipe.id}`); }}
+                  onPress={() => handleRecipePress(recipe)}
                 >
                   <Image
                     source={{ uri: recipe.image_url }}
@@ -744,6 +816,11 @@ export default function HomeScreen() {
                     transition={250}
                     placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
                   />
+                  {isRecipePro(recipe) && !isPremium && (
+                    <View style={{ position: 'absolute', top: 8, left: 8, backgroundColor: 'rgba(0,0,0,0.6)', padding: 6, borderRadius: 12, zIndex: 10 }}>
+                      <Lock size={14} color="#F59E0B" />
+                    </View>
+                  )}
                   <TouchableOpacity style={styles.heartBtn} onPress={() => toggleFavorite(rId)} activeOpacity={0.8}>
                     <Animated.View style={{ transform: [{ scale }] }}>
                       <Heart size={20} color={isFav ? T.danger : '#FFF'} fill={isFav ? T.danger : 'rgba(0,0,0,0.3)'} />
@@ -769,9 +846,14 @@ export default function HomeScreen() {
                 key={idx}
                 style={styles.proteinCard}
                 activeOpacity={0.88}
-                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push(`/details/${r.id}`); }}
+                onPress={() => handleRecipePress(r)}
               >
                 <Image source={{ uri: r.image_url }} style={styles.proteinImg} contentFit="cover" transition={250} placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }} />
+                {isRecipePro(r) && !isPremium && (
+                  <View style={{ position: 'absolute', top: 8, left: 8, backgroundColor: 'rgba(0,0,0,0.6)', padding: 6, borderRadius: 12, zIndex: 10 }}>
+                    <Lock size={14} color="#F59E0B" />
+                  </View>
+                )}
                 <View style={styles.proteinBadge}><Text style={styles.proteinBadgeText}>{r.protein || Math.round((r.total_calories || 0) * 0.08)}გ ცილა</Text></View>
                 <View style={styles.proteinInfo}><Text style={styles.proteinName} numberOfLines={1}>{r.name}</Text></View>
               </TouchableOpacity>
@@ -786,9 +868,14 @@ export default function HomeScreen() {
                 key={idx}
                 style={styles.quickCard}
                 activeOpacity={0.88}
-                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push(`/details/${r.id}`); }}
+                onPress={() => handleRecipePress(r)}
               >
                 <Image source={{ uri: r.image_url }} style={styles.quickImg} contentFit="cover" transition={250} placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }} />
+                {isRecipePro(r) && !isPremium && (
+                  <View style={{ position: 'absolute', top: 8, left: 8, backgroundColor: 'rgba(0,0,0,0.6)', padding: 6, borderRadius: 12, zIndex: 10 }}>
+                    <Lock size={14} color="#F59E0B" />
+                  </View>
+                )}
                 <View style={styles.quickInfo}>
                   <Text style={styles.quickName} numberOfLines={2}>{r.name}</Text>
                   <Text style={styles.quickTime}>{r.prep_time || 0} წუთი</Text>
@@ -1042,7 +1129,7 @@ export default function HomeScreen() {
             ]}
           >
             <View style={styles.brandAlertIconBg}>
-              {brandAlert.type === 'success' ? <CheckCircle2 size={60} color={T.success} />
+              {brandAlert.type === 'success' ? <CheckCircle size={60} color={T.success} />
                 : brandAlert.type === 'error' ? <XCircle size={60} color={T.danger} />
                   : <AlertCircle size={60} color={T.warning} />}
             </View>

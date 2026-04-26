@@ -1,19 +1,19 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform, Dimensions, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { 
-  useSharedValue, 
-  useAnimatedStyle, 
-  withTiming, 
-  withDelay, 
-  withRepeat, 
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withDelay,
+  withRepeat,
   withSequence,
-  Easing 
+  Easing
 } from 'react-native-reanimated';
-import { 
-  Crown, X, CheckCircle2, Zap, 
+import {
+  Crown, X, CheckCircle, Zap,
   Camera, BarChart3, Palette,
   Share2, ChevronRight, Star, ShieldCheck,
   Timer, Users, Award
@@ -25,12 +25,12 @@ import { getColors } from '../config/theme';
 const { width: SW } = Dimensions.get('window');
 
 const PRO_FEATURES = [
+  { id: 'recipes', title: 'ექსკლუზიური რეცეპტები', desc: 'წვდომა პროტეინ ბომბებზე, სოუსებსა და წახემსებებზე.', icon: Crown, color: '#F59E0B' },
   { id: 'scanner', title: 'ულიმიტო AI სკანერი', desc: 'დაასკანერე ნებისმიერი კერძი ლიმიტების გარეშე.', icon: Camera, color: '#1DB954' },
   { id: 'bio', title: 'Health Data Sync', desc: 'ავტომატური სინქრონიზაცია Apple Health და Google Fit-თან.', icon: BarChart3, color: '#3B82F6' },
   { id: 'fridge', title: 'Smart Fridge Pro', desc: 'ულიმიტო რეცეპტების გენერაცია შენი მაცივრიდან.', icon: Zap, color: '#8B5CF6' },
   { id: 'themes', title: 'პრემიუმ თემები', desc: 'ექსკლუზიური Executive Gold და Obsidian დიზაინი.', icon: Palette, color: '#14B8A6' },
-  { id: 'share', title: 'PRO შერინგი', desc: 'გააზიარე შენი პროგრესი პრემიუმ ვიზუალით.', icon: Share2, color: '#FF6B6B' },
-  { id: 'support', title: 'პრიორიტეტული მხარდაჭერა', desc: 'მიიღე პასუხი კითხვებზე მომენტალურად.', icon: Award, color: '#F59E0B' }
+  { id: 'share', title: 'PRO შერინგი', desc: 'გააზიარე შენი პროგრესი პრემიუმ ვიზუალით.', icon: Share2, color: '#FF6B6B' }
 ];
 
 const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
@@ -53,7 +53,7 @@ export default function PaywallScreen() {
     headerOpacity.value = withTiming(1, { duration: 800 });
     headerY.value = withTiming(0, { duration: 800, easing: Easing.out(Easing.back(1.5)) });
     cardsOpacity.value = withDelay(400, withTiming(1, { duration: 800 }));
-    
+
     btnScale.value = withRepeat(
       withSequence(
         withTiming(1.03, { duration: 1500 }),
@@ -65,9 +65,12 @@ export default function PaywallScreen() {
   }, []);
 
   const onPurchase = () => {
-    if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setPremium(true);
-    router.back();
+    if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    Alert.alert(
+      "მალე დაემატება 🚀",
+      "PRO ვერსიის ფუნქციები და ექსკლუზიური რეცეპტები სულ მალე იქნება ხელმისაწვდომი. დარჩით ჩვენთან!",
+      [{ text: "გასაგებია", onPress: () => router.back() }]
+    );
   };
 
   const scrollToPlans = () => {
@@ -105,29 +108,29 @@ export default function PaywallScreen() {
         <X size={24} color="rgba(255,255,255,0.4)" />
       </TouchableOpacity>
 
-      <ScrollView 
+      <ScrollView
         ref={scrollRef}
-        contentContainerStyle={pw.scroll} 
+        contentContainerStyle={pw.scroll}
         showsVerticalScrollIndicator={false}
       >
-        
+
         <Animated.View style={[pw.header, headerStyle]}>
           <View style={pw.socialProofBadge}>
-             <Users size={12} color="#1DB954" />
-             <Text style={pw.socialProofTxt}>5,000+ მომხმარებელი • 4.9 ★</Text>
+            <Users size={12} color="#1DB954" />
+            <Text style={pw.socialProofTxt}>5,000+ მომხმარებელი • 4.9 ★</Text>
           </View>
-          
+
           <Text style={pw.heroTitle}>გახდი შენი სხეულის{'\n'}არქიტექტორი 🏛️</Text>
           <Text style={pw.heroSub}>გახსენი Balansi-ს სრული პოტენციალი და მიაღწიე მიზანს 2-ჯერ უფრო სწრაფად.</Text>
-          
+
           <View style={pw.urgencyBox}>
-             <Timer size={14} color="#FBBF24" />
-             <Text style={pw.urgencyTxt}>შეზღუდული შეთავაზება: -42% ფასდაკლება</Text>
+            <Timer size={14} color="#FBBF24" />
+            <Text style={pw.urgencyTxt}>შეზღუდული შეთავაზება: -42% ფასდაკლება</Text>
           </View>
 
           <TouchableOpacity style={pw.headerCta} onPress={scrollToPlans}>
-             <Text style={pw.headerCtaTxt}>გეგმის არჩევა</Text>
-             <ChevronRight size={16} color="#F59E0B" />
+            <Text style={pw.headerCtaTxt}>გეგმის არჩევა</Text>
+            <ChevronRight size={16} color="#F59E0B" />
           </TouchableOpacity>
         </Animated.View>
 
@@ -141,27 +144,27 @@ export default function PaywallScreen() {
                 <Text style={pw.featureTitle}>{f.title}</Text>
                 <Text style={pw.featureDesc}>{f.desc}</Text>
               </View>
-              <CheckCircle2 size={16} color="rgba(255,255,255,0.1)" />
+              <CheckCircle size={16} color="rgba(255,255,255,0.1)" />
             </View>
           ))}
         </Animated.View>
 
         <View style={pw.trustRow}>
-           <View style={pw.trustItem}>
-              <ShieldCheck size={20} color="#1DB954" />
-              <Text style={pw.trustText}>30-დღიანი გარანტია</Text>
-           </View>
-           <View style={pw.trustItem}>
-              <Award size={20} color="#F59E0B" />
-              <Text style={pw.trustText}>Editor's Choice</Text>
-           </View>
+          <View style={pw.trustItem}>
+            <ShieldCheck size={20} color="#1DB954" />
+            <Text style={pw.trustText}>30-დღიანი გარანტია</Text>
+          </View>
+          <View style={pw.trustItem}>
+            <Award size={20} color="#F59E0B" />
+            <Text style={pw.trustText}>Editor's Choice</Text>
+          </View>
         </View>
 
         <View style={pw.plansSection}>
           <Text style={pw.plansHeading}>შეარჩიე შენი გზა</Text>
-          
+
           {/* Monthly */}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[pw.tierCard, selectedPlan === 'monthly' && pw.tierActive]}
             onPress={() => { Haptics.selectionAsync(); setSelectedPlan('monthly'); }}
           >
@@ -177,13 +180,13 @@ export default function PaywallScreen() {
           </TouchableOpacity>
 
           {/* 6 Months - Popular */}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[pw.tierCard, selectedPlan === 'semi' && pw.tierActive]}
             onPress={() => { Haptics.selectionAsync(); setSelectedPlan('semi'); }}
           >
-             <View style={pw.popularBadge}>
-                <Text style={pw.popularBadgeTxt}>ყველაზე პოპულარული</Text>
-             </View>
+            <View style={pw.popularBadge}>
+              <Text style={pw.popularBadgeTxt}>ყველაზე პოპულარული</Text>
+            </View>
             <View style={pw.tierLeft}>
               <Text style={pw.tierTitle}>6 თვე</Text>
               <Text style={[pw.tierSubtitle, { color: '#FCD34D' }]}>დაზოგე 25% (₾ 7.50 / თვე)</Text>
@@ -196,13 +199,13 @@ export default function PaywallScreen() {
           </TouchableOpacity>
 
           {/* Yearly - Best Value */}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[pw.tierCard, selectedPlan === 'yearly' && pw.tierActive, { borderColor: '#F59E0B' }]}
             onPress={() => { Haptics.selectionAsync(); setSelectedPlan('yearly'); }}
           >
-             <View style={[pw.popularBadge, { backgroundColor: '#1DB954' }]}>
-                <Text style={pw.popularBadgeTxt}>საუკეთესო ფასი</Text>
-             </View>
+            <View style={[pw.popularBadge, { backgroundColor: '#1DB954' }]}>
+              <Text style={pw.popularBadgeTxt}>საუკეთესო ფასი</Text>
+            </View>
             <View style={pw.tierLeft}>
               <Text style={pw.tierTitle}>1 წელი</Text>
               <Text style={[pw.tierSubtitle, { color: '#10B981' }]}>დაზოგე 42% (₾ 5.83 / თვე)</Text>
@@ -210,7 +213,7 @@ export default function PaywallScreen() {
             <View style={pw.tierRight}>
               <Text style={pw.priceAnchor}>₾ 119.88</Text>
               <Text style={pw.tierPrice}>₾ 69.99</Text>
-              <Text style={pw.tierPeriod}>წლიური აბონემენტი</Text>
+              <Text style={pw.tierPeriod}>წლიური აბონიმენტი</Text>
             </View>
           </TouchableOpacity>
 
@@ -228,7 +231,7 @@ export default function PaywallScreen() {
               <Text style={pw.mainBtnTxt}>გახდი PRO დღესვე 🚀</Text>
             </LinearGradient>
           </AnimatedTouchableOpacity>
-          
+
           <View style={pw.securityRow}>
             <ShieldCheck size={14} color="rgba(255,255,255,0.4)" />
             <Text style={pw.securityTxt}>უსაფრთხო გადახდა • გაუქმება ნებისმიერ დროს</Text>
