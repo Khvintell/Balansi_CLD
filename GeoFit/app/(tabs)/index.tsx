@@ -40,6 +40,9 @@ import { useAvatarStore } from '../../store/useAvatarStore';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 
+// Offline Fallback Data
+import LOCAL_RECIPES from '../../assets/data/recipes.json';
+
 // ─── Constants ────────────────────────────────────────────────────────────────
 const CATEGORIES = ['აღმოაჩინე', 'საუზმე', 'სადილი', 'ვახშამი', 'წახემსება', 'სოუსები', 'ფავორიტები'];
 const SWIPE_CATEGORIES = ['საუზმე', 'სადილი', 'ვახშამი', 'წახემსება', 'სოუსები', 'ფავორიტები'];
@@ -521,8 +524,20 @@ export default function HomeScreen() {
             list = p;
             AsyncStorage.setItem('cachedRecipes', JSON.stringify(p));
           }
-        } else if (list.length === 0) { setDbStatus('error'); return; }
-      } catch { if (list.length === 0) { setDbStatus('error'); return; } }
+        }
+      } catch (e) {
+        console.log("Fetch failed, using cache/local data", e);
+      }
+
+      // If still no list, use the bundled LOCAL_RECIPES
+      if (list.length === 0) {
+        console.log("Using bundled local recipes");
+        list = LOCAL_RECIPES.map((r: any) => ({ 
+          ...r, 
+          image_url: getImageUrl(r.image_url, SERVER_URL) 
+        }));
+      }
+
       if (list.length === 0) { setDbStatus('empty'); return; }
       setDbStatus('ok'); setRecipes(list);
       if (!currentTip) setCurrentTip(TIPS[Math.floor(Math.random() * TIPS.length)]);
