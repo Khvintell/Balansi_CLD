@@ -1,7 +1,11 @@
+import os
 import google.generativeai as genai
 
-# აქ ჩასვი შენი ახალი API გასაღები
-API_KEY = "AIzaSyBRKjN0gop94PuDtjyAn6OMp845Dkkk7iA"
+# API გასაღები იკითხება .env ფაილიდან ან გარემოს ცვლადებიდან
+API_KEY = os.getenv("GOOGLE_API_KEY")
+if not API_KEY:
+    print("[ERROR] GOOGLE_API_KEY not found in environment.")
+    exit(1)
 genai.configure(api_key=API_KEY)
 
 print("[SCANNER] Examining API key and Google servers...\n")
