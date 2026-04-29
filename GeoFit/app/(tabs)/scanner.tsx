@@ -303,7 +303,11 @@ export default function ScannerScreen() {
     } catch (error) {
       if (isCancelledRef.current) return;
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert('შეცდომა', 'სერვერთან კავშირი ვერ მოხერხდა.', [{ text: 'კარგი', onPress: retakePhoto }]);
+      Alert.alert(
+        'საჭიროა ინტერნეტი 📡', 
+        'სამწუხაროდ, AI სკანერი ინტერნეტის გარეშე ვერ მუშაობს. გთხოვთ, შეამოწმოთ კავშირი.', 
+        [{ text: 'კარგი', onPress: retakePhoto }]
+      );
     } finally {
       if (!isCancelledRef.current) setIsScanning(false);
     }

@@ -2,19 +2,27 @@ import { useCallback, useState } from 'react';
 import { Platform, Alert } from 'react-native';
 import { useBioStore } from '../store/useBioStore';
 import { useDiaryStore } from '../store/useDiaryStore';
-import AppleHealthKit, { HealthValue, HealthInputOptions, HealthKitPermissions } from 'react-native-health';
-import { 
-  initialize as initHealthConnect, 
-  requestPermission as requestHealthConnectPermission,
-  readRecords,
-  readRecords as readHealthConnectRecords
-} from 'react-native-health-connect';
-import { 
+import type { HealthValue, HealthInputOptions, HealthKitPermissions } from 'react-native-health';
+import type { 
   StepsRecord, 
   ActiveCaloriesBurnedRecord, 
   SleepSessionRecord, 
   ExerciseSessionRecord 
 } from 'react-native-health-connect/lib/typescript/types/records.types';
+
+let AppleHealthKit: any;
+let initHealthConnect: any;
+let requestHealthConnectPermission: any;
+let readRecords: any;
+
+if (Platform.OS === 'ios') {
+  AppleHealthKit = require('react-native-health').default;
+} else if (Platform.OS === 'android') {
+  const HealthConnect = require('react-native-health-connect');
+  initHealthConnect = HealthConnect.initialize;
+  requestHealthConnectPermission = HealthConnect.requestPermission;
+  readRecords = HealthConnect.readRecords;
+}
 import { SERVER_URL } from '../config/api';
 
 // Common biometric data interface

@@ -462,6 +462,7 @@ export default function HomeScreen() {
   const [goalBasedRecipes, setGoalBasedRecipes] = useState<any[]>([]);
   const [highProteinRecipes, setHighProteinRecipes] = useState<any[]>([]);
   const [viewAllSection, setViewAllSection] = useState<{ title: string; data: any[] } | null>(null);
+  const [isOffline, setIsOffline] = useState(false);
   const [brandAlert, setBrandAlert] = useState({ visible: false, title: '', message: '', type: 'error' });
   const [tabHeights, setTabHeights] = useState<{ [k: string]: number }>({});
 
@@ -523,15 +524,18 @@ export default function HomeScreen() {
             const p = fresh.map((r: any) => ({ ...r, image_url: getImageUrl(r.image_url, SERVER_URL) }));
             list = p;
             AsyncStorage.setItem('cachedRecipes', JSON.stringify(p));
+            setIsOffline(false);
           }
         }
       } catch (e) {
         console.log("Fetch failed, using cache/local data", e);
+        setIsOffline(true);
       }
 
       // If still no list, use the bundled LOCAL_RECIPES
       if (list.length === 0) {
         console.log("Using bundled local recipes");
+        setIsOffline(true);
         list = LOCAL_RECIPES.map((r: any) => ({ 
           ...r, 
           image_url: getImageUrl(r.image_url, SERVER_URL) 
@@ -980,6 +984,25 @@ export default function HomeScreen() {
       >
         {/* INDEX 0 — Hero */}
         <Animated.View style={{ opacity: headerOpacity, overflow: 'hidden' }}>
+          {isOffline && !viewAllSection && (
+            <View style={{ 
+              backgroundColor: T.warning + '15', 
+              marginHorizontal: 20, 
+              marginTop: 10, 
+              padding: 12, 
+              borderRadius: 15, 
+              flexDirection: 'row', 
+              alignItems: 'center',
+              borderWidth: 1,
+              borderColor: T.warning + '30'
+            }}>
+              <WifiOff size={18} color={T.warning} style={{ marginRight: 10 }} />
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: T.dark, fontSize: 13, fontWeight: '800' }}>ხაზგარეშე რეჟიმი</Text>
+                <Text style={{ color: T.mid, fontSize: 11, fontWeight: '600' }}>ინტერნეტი არ არის. გამოიყენება ლოკალური მონაცემები.</Text>
+              </View>
+            </View>
+          )}
           {!viewAllSection && <SimpleHeader userName={userName} T={T} />}
           {!viewAllSection && (
             <HeroStatsRow
