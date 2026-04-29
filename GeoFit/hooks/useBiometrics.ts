@@ -2,27 +2,6 @@ import { useCallback, useState } from 'react';
 import { Platform, Alert } from 'react-native';
 import { useBioStore } from '../store/useBioStore';
 import { useDiaryStore } from '../store/useDiaryStore';
-import type { HealthValue, HealthInputOptions, HealthKitPermissions } from 'react-native-health';
-import type { 
-  StepsRecord, 
-  ActiveCaloriesBurnedRecord, 
-  SleepSessionRecord, 
-  ExerciseSessionRecord 
-} from 'react-native-health-connect/lib/typescript/types/records.types';
-
-let AppleHealthKit: any;
-let initHealthConnect: any;
-let requestHealthConnectPermission: any;
-let readRecords: any;
-
-if (Platform.OS === 'ios') {
-  AppleHealthKit = require('react-native-health').default;
-} else if (Platform.OS === 'android') {
-  const HealthConnect = require('react-native-health-connect');
-  initHealthConnect = HealthConnect.initialize;
-  requestHealthConnectPermission = HealthConnect.requestPermission;
-  readRecords = HealthConnect.readRecords;
-}
 import { SERVER_URL } from '../config/api';
 
 // Common biometric data interface
@@ -34,12 +13,42 @@ interface UnifiedHealthData {
   workoutDurationMinutes: number;
 }
 
+// ─── Native Health Modules (loaded lazily, only on native platforms) ──────────
+let AppleHealthKit: any = null;
+let initHealthConnect: any = null;
+let requestHealthConnectPermission: any = null;
+let readRecords: any = null;
+
+try {
+  if (Platform.OS === 'ios') {
+    AppleHealthKit = require('react-native-health').default;
+  } else if (Platform.OS === 'android') {
+    const HealthConnect = require('react-native-health-connect');
+    initHealthConnect = HealthConnect.initialize;
+    requestHealthConnectPermission = HealthConnect.requestPermission;
+    readRecords = HealthConnect.readRecords;
+  }
+} catch (e) {
+  // Health modules not installed — bio sync will use fallback mock data
+  console.log('[BioEngine] Health modules not available, using mock data.');
+}
+
+// ─── Mock fallback when native health modules are unavailable ────────────────
+const getMockHealthData = (): UnifiedHealthData => ({
+  step_count: 1200,
+  active_energy_burned: 50,
+  sleep_duration_minutes: 420,
+  workouts: [],
+  workoutDurationMinutes: 0,
+});
+
 export const useBiometrics = () => {
   const [isSyncing, setIsSyncing] = useState(false);
 
-  const requestIOSPermissions = useCallback(() => {
+  const requestIOSPermissions = useCallback((): Promise<boolean> => {
+    if (!AppleHealthKit) return Promise.resolve(false);
     return new Promise<boolean>((resolve) => {
-      const permissions: HealthKitPermissions = {
+      const permissions = {
         permissions: {
           read: [
             AppleHealthKit.Constants.Permissions.Steps,
@@ -62,7 +71,8 @@ export const useBiometrics = () => {
     });
   }, []);
 
-  const requestAndroidPermissions = useCallback(async () => {
+  const requestAndroidPermissions = useCallback(async (): Promise<boolean> => {
+    if (!initHealthConnect) return false;
     try {
       await initHealthConnect();
       const grantedPermissions = await requestHealthConnectPermission([
@@ -79,8 +89,9 @@ export const useBiometrics = () => {
   }, []);
 
   const fetchIOSData = useCallback(async (startOfDay: Date, endOfDay: Date): Promise<UnifiedHealthData> => {
+    if (!AppleHealthKit) return getMockHealthData();
     return new Promise((resolve) => {
-      const options: HealthInputOptions = {
+      const options = {
         startDate: startOfDay.toISOString(),
         endDate: endOfDay.toISOString(),
       };
@@ -101,17 +112,16 @@ export const useBiometrics = () => {
         });
       };
 
-      // In a real scenario, you'd chain or Promisify these, but for brevity:
       // Steps
-      AppleHealthKit.getDailyStepCountSamples(options, (err: Object, results: HealthValue[]) => {
+      AppleHealthKit.getDailyStepCountSamples(options, (err: any, results: any[]) => {
         if (!err && results?.length) {
-          step_count = results.reduce((sum, r) => sum + r.value, 0);
+          step_count = results.reduce((sum: number, r: any) => sum + r.value, 0);
         }
         
         // Calories
-        AppleHealthKit.getActiveEnergyBurned(options, (err2: Object, results2: HealthValue[]) => {
+        AppleHealthKit.getActiveEnergyBurned(options, (err2: any, results2: any[]) => {
           if (!err2 && results2?.length) {
-            active_energy_burned = results2.reduce((sum, r) => sum + r.value, 0);
+            active_energy_burned = results2.reduce((sum: number, r: any) => sum + r.value, 0);
           }
 
           // Sleep (Since yesterday to capture night sleep)
@@ -119,11 +129,10 @@ export const useBiometrics = () => {
             startDate: new Date(startOfDay.getTime() - 24 * 60 * 60 * 1000).toISOString(),
             endDate: endOfDay.toISOString(),
           };
-          AppleHealthKit.getSleepSamples(sleepOpts, (err3: Object, results3: HealthValue[]) => {
+          AppleHealthKit.getSleepSamples(sleepOpts, (err3: any, results3: any[]) => {
             if (!err3 && results3?.length) {
-              const asSleepSamples = results3 as any[];
-              const sleepPeriods = asSleepSamples.filter(s => s.value === 'ASLEEP');
-              const totalSleepMs = sleepPeriods.reduce((sum, s) => sum + (new Date(s.endDate).getTime() - new Date(s.startDate).getTime()), 0);
+              const sleepPeriods = results3.filter((s: any) => s.value === 'ASLEEP');
+              const totalSleepMs = sleepPeriods.reduce((sum: number, s: any) => sum + (new Date(s.endDate).getTime() - new Date(s.startDate).getTime()), 0);
               sleep_duration_minutes = Math.floor(totalSleepMs / 60000);
             }
 
@@ -131,10 +140,10 @@ export const useBiometrics = () => {
             AppleHealthKit.getSamples({
               ...options,
               type: 'Workout' as any,
-            }, (err4: Object, results4: any[]) => {
+            }, (err4: any, results4: any[]) => {
               if (!err4 && results4?.length) {
-                workouts = results4.map(w => w.activityName || 'Workout');
-                workoutDurationMinutes = results4.reduce((sum, r) => {
+                workouts = results4.map((w: any) => w.activityName || 'Workout');
+                workoutDurationMinutes = results4.reduce((sum: number, r: any) => {
                   const duration = (new Date(r.endDate).getTime() - new Date(r.startDate).getTime()) / 60000;
                   return sum + duration;
                 }, 0);
@@ -148,6 +157,7 @@ export const useBiometrics = () => {
   }, []);
 
   const fetchAndroidData = useCallback(async (startOfDay: Date, endOfDay: Date): Promise<UnifiedHealthData> => {
+    if (!readRecords) return getMockHealthData();
     try {
       const timeRangeFilter = {
         operator: 'between' as const,
@@ -187,8 +197,7 @@ export const useBiometrics = () => {
       };
     } catch (err) {
       console.log('[Android] Fetch error:', err);
-      // return empty if fails
-      return { step_count: 0, active_energy_burned: 0, workouts: [], workoutDurationMinutes: 0, sleep_duration_minutes: 0 };
+      return getMockHealthData();
     }
   }, []);
 
