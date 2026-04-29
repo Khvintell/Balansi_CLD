@@ -5,8 +5,8 @@
   "scripts": {
     "start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint"
   },
@@ -56,12 +56,6 @@
     "eslint": "^9.25.0",
     "eslint-config-expo": "~10.0.0",
     "typescript": "~5.9.2"
-  },
-  "overrides": {
-    "rimraf": "^4.0.0",
-    "glob": "^8.0.0",
-    "inflight": "^1.0.6",
-    "@xmldom/xmldom": "^0.8.10"
   },
   "private": true
 }
