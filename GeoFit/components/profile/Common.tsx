@@ -27,11 +27,46 @@ export const SectionHeader = ({ title, action, onAction, S }: any) => (
 );
 
 export const AchievementCard = ({ icon: Icon, label, desc, color, bg, locked, S, C }: any) => (
-  <View style={[S.badgeCard, locked && S.badgeCardLocked]}>
-    <View style={[S.badgeIconWrap, { backgroundColor: locked ? C.surfaceMid : bg, borderColor: locked ? C.border : color + '40' }]}>
-      {locked ? <Lock size={18} color={C.inkLight} /> : <Icon size={22} color={color} />}
+  <View style={[S.badgeCard, { 
+    width: 110, 
+    height: 145, 
+    paddingVertical: 16, 
+    paddingHorizontal: 8,
+    alignItems: 'center',
+    justifyContent: 'flex-start'
+  }, locked && { borderColor: C.borderLight }]}>
+    <View style={[S.badgeIconWrap, { 
+      backgroundColor: locked ? C.surfaceMid : bg, 
+      borderColor: locked ? C.border : color + '40',
+      width: 54, height: 54, borderRadius: 18,
+      marginBottom: 10,
+      justifyContent: 'center',
+      alignItems: 'center'
+    }]}>
+      <Icon size={24} color={locked ? C.inkFaint : color} />
+      {locked && (
+        <View style={{ 
+          position: 'absolute', top: -3, right: -3, 
+          backgroundColor: C.surface, borderRadius: 8, 
+          padding: 2, borderWidth: 1, borderColor: C.border 
+        }}>
+          <Lock size={10} color={C.inkLight} />
+        </View>
+      )}
     </View>
-    <Text style={[S.badgeLabel, locked && { color: C.inkLight }]} numberOfLines={1} adjustsFontSizeToFit>{label}</Text>
-    <Text style={[S.badgeDesc, locked && { color: C.inkFaint }]} numberOfLines={1}>{desc}</Text>
+    <View style={{ height: 40, justifyContent: 'center', width: '100%' }}>
+      <Text style={[S.badgeLabel, { fontSize: 12, fontWeight: '800', textAlign: 'center', color: C.ink }]} 
+        numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.9}>
+        {label}
+      </Text>
+    </View>
+    <View style={{ height: 15, width: '100%' }}>
+      {locked && (
+        <Text style={[S.badgeDesc, { fontSize: 9.5, color: C.inkLight, textAlign: 'center' }]} 
+          numberOfLines={1} adjustsFontSizeToFit>
+          ჩაკეტილია
+        </Text>
+      )}
+    </View>
   </View>
 );

@@ -3,7 +3,7 @@ import { TouchableOpacity, View, Text, StyleSheet } from 'react-native';
 import { CheckCircle } from 'lucide-react-native';
 
 const gc = StyleSheet.create({
-  card: { flexDirection:'row', alignItems:'center', padding:18, borderRadius:24, borderWidth:2, marginBottom:12, shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 15 },
+  card: { flexDirection:'row', alignItems:'center', padding:18, borderRadius:24, borderWidth:2, marginBottom:12 },
   iconBox: { width:52, height:52, borderRadius:16, alignItems:'center', justifyContent:'center', marginRight:14 },
   label: { fontSize:17, fontWeight:'900', marginBottom:3 },
   desc: { fontSize:12, color:'#6B7280', fontWeight:'600' },

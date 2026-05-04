@@ -297,11 +297,6 @@ const GlassCard = ({ children, style, C }: any) => (
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.9)',
     borderRadius: 28,
-    shadowColor: C.ink,
-    shadowOpacity: 0.08,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: 12 },
-    elevation: 6,
   }, style]}>
     {children}
   </View>
@@ -342,8 +337,6 @@ const getMrStyles = (C: any) => StyleSheet.create({
     flex: 1, alignItems: 'center', paddingVertical: 16, paddingHorizontal: 8,
     borderRadius: 22,
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.6)',
-    shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 10, shadowOffset: { width: 0, height: 4 },
-    elevation: 2,
   },
   val: { fontSize: 22, fontWeight: '900', marginBottom: 3 },
   unit: { fontSize: 13, fontWeight: '800' },
@@ -375,7 +368,7 @@ export default function OnboardingScreen() {
   const [goal, setGoal] = useState<GoalType>(profile?.goal || 'lose');
 
   const [step, setStep] = useState(isEditMode ? 3 : 1);
-  const [alertS, setAlertS] = useState<any>({ visible: false, type: 'info', title: '', message: '' });
+  const [alertS, setAlertS] = useState<BAlertState>({ visible: false, type: 'info', title: '', message: '' });
 
   // ── Animation values ─────────────────────────────────
   const btnPulse = useRef(new Animated.Value(1)).current;
@@ -446,7 +439,12 @@ export default function OnboardingScreen() {
       isEditMode ? router.back() : router.replace('/(tabs)');
     } catch (e) {
       console.error("Failed to save profile:", e);
-      Alert.alert('შეცდომა', 'მონაცემები ვერ შეინახა.');
+      setAlertS({
+        visible: true,
+        type: 'error',
+        title: 'შეცდომა',
+        message: 'მონაცემები ვერ შეინახა.',
+      });
     }
   };
 
@@ -724,11 +722,6 @@ export default function OnboardingScreen() {
         <View style={S.bottomBar}>
           <Animated.View style={{ transform: [{ scale: btnPulse }] }}>
             {/* Glow halo behind button */}
-            <Animated.View style={[S.btnGlow, {
-              backgroundColor: step === 5 ? C.primary : C.ink,
-              opacity: btnGlow.interpolate({ inputRange: [0, 1], outputRange: [0.18, 0.35] }),
-              transform: [{ scale: btnGlow.interpolate({ inputRange: [0, 1], outputRange: [1, 1.06] }) }],
-            }]} />
             <Pressable
               style={({ pressed }) => [
                 S.nextBtn,
@@ -829,8 +822,6 @@ const getSStyles = (C: any, SH: number) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: '#FFF',
-    shadowColor: C.ink, shadowOpacity: 0.1, shadowRadius: 18, shadowOffset: { width: 0, height: 8 },
-    elevation: 6,
     borderWidth: 1.5,
     borderColor: 'rgba(0,0,0,0.04)',
   },
@@ -862,8 +853,7 @@ const getSStyles = (C: any, SH: number) => StyleSheet.create({
     width: 40, height: 40, borderRadius: 20,
     backgroundColor: '#FFF',
     justifyContent: 'center', alignItems: 'center',
-    shadowColor: C.primary, shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 4 },
-    elevation: 8,
+    borderWidth: 1, borderColor: 'rgba(0,0,0,0.05)',
     zIndex: 5,
   },
 
@@ -873,9 +863,8 @@ const getSStyles = (C: any, SH: number) => StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.85)',
     paddingHorizontal: 12, paddingVertical: 7,
     borderRadius: 100,
-    borderWidth: 1, borderColor: 'rgba(0,0,0,0.04)',
+    borderWidth: 1, borderColor: 'rgba(0,0,0,0.08)',
     marginBottom: 22,
-    shadowColor: C.primary, shadowOpacity: 0.15, shadowRadius: 12, shadowOffset: { width: 0, height: 4 },
   },
   brandBadgeTxt: { fontSize: 11, fontWeight: '900', color: C.primaryDark, letterSpacing: 0.8 },
   brandBadgeDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: C.primary },
@@ -895,7 +884,7 @@ const getSStyles = (C: any, SH: number) => StyleSheet.create({
   stepEmojiBg: {
     width: 80, height: 80, borderRadius: 26,
     justifyContent: 'center', alignItems: 'center',
-    shadowColor: C.ink, shadowOpacity: 0.08, shadowRadius: 14, shadowOffset: { width: 0, height: 6 },
+    borderWidth: 1, borderColor: 'rgba(0,0,0,0.04)',
   },
   stepEmojiHalo: {
     position: 'absolute', width: 100, height: 100, borderRadius: 30,
@@ -939,7 +928,6 @@ const getSStyles = (C: any, SH: number) => StyleSheet.create({
     backgroundColor: C.primary,
     paddingHorizontal: 12, paddingVertical: 6,
     borderRadius: 100, marginBottom: 14,
-    shadowColor: C.primary, shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 6 },
   },
   successBadgeTxt: { color: '#FFF', fontSize: 11, fontWeight: '900', letterSpacing: 0.5, textTransform: 'uppercase' },
 
@@ -948,8 +936,6 @@ const getSStyles = (C: any, SH: number) => StyleSheet.create({
     marginTop: 14, marginBottom: 18,
     backgroundColor: '#0A0A0A',
     overflow: 'hidden',
-    shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 20, shadowOffset: { width: 0, height: 12 },
-    elevation: 10,
   },
   calHeroBg1: { position: 'absolute', width: 240, height: 240, borderRadius: 120, backgroundColor: C.primary + '40', top: -100, right: -80 },
   calHeroBg2: { position: 'absolute', width: 160, height: 160, borderRadius: 80, backgroundColor: C.info + '25', bottom: -60, left: -30 },
@@ -997,8 +983,6 @@ const getSStyles = (C: any, SH: number) => StyleSheet.create({
   nextBtn: {
     flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10,
     paddingVertical: 19, borderRadius: 32,
-    shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 16, shadowOffset: { width: 0, height: 8 },
-    elevation: 8,
   },
   nextBtnTxt: { color: '#FFF', fontSize: 17, fontWeight: '900', letterSpacing: 0.3 },
   bottomHint: {

@@ -34,21 +34,31 @@ export const MacroBar = ({
   });
 
   return (
-    <View style={S.macroBarWrap}>
+    <View style={[S.macroBarWrap, { marginBottom: 4 }]}>
       <View style={S.macroBarHeader}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 }}>
-          <View style={[S.macroBarIcon, { backgroundColor: bg }]}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1 }}>
+          <View style={[S.macroBarIcon, { backgroundColor: bg, width: 22, height: 22, borderRadius: 8 }]}>
             <Icon size={12} color={color} />
           </View>
-          <Text style={S.macroBarLabel} numberOfLines={1} adjustsFontSizeToFit>{label}</Text>
+          <Text style={[S.macroBarLabel, { fontSize: 11, fontWeight: '800' }]} numberOfLines={1}>{label}</Text>
         </View>
-        <Text style={[S.macroBarVal, { color: '#000', flexShrink: 0 }]}>
-          {value}
-          <Text style={S.macroBarUnit}>/{target}{unit}</Text>
+        <Text style={[S.macroBarVal, { color: '#0F172A', fontWeight: '900', fontSize: 12 }]}>
+          {Math.round(value)}
+          <Text style={{ fontSize: 9, color: '#64748B', fontWeight: '700' }}> / {target}{unit}</Text>
         </Text>
       </View>
-      <View style={S.macroBarBg}>
-        <Animated.View style={[S.macroBarFill, { width, backgroundColor: color }]} />
+      <View style={[S.macroBarBg, { height: 6, borderRadius: 3, backgroundColor: '#F1F5F9' }]}>
+        <Animated.View style={[S.macroBarFill, { 
+          width, 
+          backgroundColor: color, 
+          height: '100%', 
+          borderRadius: 3,
+          shadowColor: color,
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.3,
+          shadowRadius: 3,
+          elevation: 2
+        }]} />
       </View>
     </View>
   );

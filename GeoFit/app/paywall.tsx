@@ -21,6 +21,7 @@ import {
 import { useDiaryStore } from '../store/useDiaryStore';
 import { useThemeStore } from '../store/useThemeStore';
 import { getColors } from '../config/theme';
+import { BrandAlert, BAlertState } from '../components/ui/BrandAlert';
 
 const { width: SW } = Dimensions.get('window');
 
@@ -42,6 +43,7 @@ export default function PaywallScreen() {
   const C = getColors(themeId);
   const { setPremium } = useDiaryStore();
   const [selectedPlan, setSelectedPlan] = useState<string>('semi');
+  const [brandAlert, setBrandAlert] = useState<BAlertState>({ visible: false, title: '', message: '', type: 'error' });
 
   // Animations
   const headerOpacity = useSharedValue(0);
@@ -66,11 +68,13 @@ export default function PaywallScreen() {
 
   const onPurchase = () => {
     if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    Alert.alert(
-      "მალე დაემატება 🚀",
-      "PRO ვერსიის ფუნქციები და ექსკლუზიური რეცეპტები სულ მალე იქნება ხელმისაწვდომი. დარჩით ჩვენთან!",
-      [{ text: "გასაგებია", onPress: () => router.back() }]
-    );
+    setBrandAlert({
+      visible: true,
+      type: 'info',
+      title: 'მალე დაემატება 🚀',
+      message: 'PRO ვერსიის ფუნქციები და ექსკლუზიური რეცეპტები სულ მალე იქნება ხელმისაწვდომი. დარჩით ჩვენთან!',
+      actions: [{ label: 'გასაგებია', onPress: () => router.back() }]
+    });
   };
 
   const scrollToPlans = () => {
@@ -241,6 +245,11 @@ export default function PaywallScreen() {
         <View style={pw.footerInfo}>
           <Text style={pw.footerTxt}>გამოწერის შემთხვევაში თქვენ ეთანხმებით მომსახურების პირობებს. 30-დღიანი money-back გარანტია მოქმედებს ყველა გეგმაზე.</Text>
         </View>
+
+        <BrandAlert 
+          state={brandAlert} 
+          onClose={() => setBrandAlert({ ...brandAlert, visible: false })} 
+        />
 
       </ScrollView>
     </View>

@@ -19,7 +19,7 @@ export const getProfileStyles = (C: any, TOP: number, BOTTOM: number) => StyleSh
   headerTitle: { fontSize: 16, fontWeight: '800', color: C.ink, letterSpacing: 0.3 },
   statsRow: { flexDirection: 'row', gap: 12, marginBottom: 16, paddingHorizontal: 16 },
 
-  heroCard: { backgroundColor: C.surface, borderRadius: 28, padding: 22, marginBottom: 14, borderWidth: 1, borderColor: C.border, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 20, shadowOffset: { width: 0, height: 8 }, elevation: 8 },
+  heroCard: { backgroundColor: C.surface, borderRadius: 28, padding: 22, marginBottom: 14, borderWidth: 1, borderColor: C.border, overflow: 'hidden' },
   heroGlow: { position: 'absolute', width: 200, height: 200, borderRadius: 100 },
   heroTopRow: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 18 },
   avatarWrap: { position: 'relative' },
@@ -107,7 +107,7 @@ export const getProfileStyles = (C: any, TOP: number, BOTTOM: number) => StyleSh
   waterBgFill: { position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 1 },
   waveLayer: { position: 'absolute', top: -385, left: -100, width: 600, height: 600, borderRadius: 270, backgroundColor: 'rgba(255,255,255,0.4)' },
   waterHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  waterIconBg: { width: 50, height: 50, borderRadius: 16, backgroundColor: C.surface, justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10, elevation: 2, borderWidth: 1, borderColor: C.borderLight },
+  waterIconBg: { width: 50, height: 50, borderRadius: 16, backgroundColor: C.surface, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: C.borderLight },
   waterTitle: { fontSize: 18, fontWeight: '900', color: C.ink },
   waterSub: { fontSize: 16, color: '#0EA5E9', fontWeight: '900', marginTop: 2 },
   waterHeaderRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
@@ -115,7 +115,7 @@ export const getProfileStyles = (C: any, TOP: number, BOTTOM: number) => StyleSh
   waterBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#0EA5E9', paddingHorizontal: 16, paddingVertical: 14, borderRadius: 16, shadowColor: '#0EA5E9', shadowOpacity: 0.4, shadowRadius: 12, elevation: 5 },
   waterBtnTxt: { color: '#FFF', fontWeight: '900', fontSize: 14 },
   waterFooterRow: { marginTop: 26, alignItems: 'center', justifyContent: 'center' },
-  waterSuccessBox: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(255,255,255,0.95)', paddingHorizontal: 20, paddingVertical: 12, borderRadius: 18, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 12 },
+  waterSuccessBox: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(255,255,255,0.95)', paddingHorizontal: 20, paddingVertical: 12, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(0,0,0,0.05)' },
   waterSuccessTxt: { fontSize: 14, fontWeight: '900', color: C.primary },
   waterProgressBadge: { backgroundColor: 'rgba(255,255,255,0.92)', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 14 },
   waterPercentInfo: { fontSize: 14, fontWeight: '900', color: '#0EA5E9' },
@@ -257,7 +257,7 @@ export const getProfileStyles = (C: any, TOP: number, BOTTOM: number) => StyleSh
   modalGhostBtnTxt: { color: C.ink, fontWeight: '800', fontSize: 16 },
 
   // Alerts & FAQ
-  alertCard: { backgroundColor: C.surface, borderRadius: 28, padding: 28, alignItems: 'center', borderWidth: 1, borderColor: C.border, width: '100%', maxHeight: '85%', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 20, elevation: 10 },
+  alertCard: { backgroundColor: C.surface, borderRadius: 28, padding: 28, alignItems: 'center', borderWidth: 1, borderColor: C.border, width: '100%', maxHeight: '85%' },
   alertIconBg: { padding: 18, borderRadius: 44, marginBottom: 14 },
   alertTitle: { fontSize: 20, fontWeight: '900', color: C.ink, marginBottom: 10, textAlign: 'center' },
   alertMsg: { fontSize: 14, color: C.inkMid, textAlign: 'center', lineHeight: 22, marginBottom: 14, fontWeight: '600' },

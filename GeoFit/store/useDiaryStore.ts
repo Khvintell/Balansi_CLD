@@ -83,11 +83,12 @@ export const useDiaryStore = create<DiaryState>()(
         });
       },
       resetDay: (date) => {
-        set((state) => {
-          const newIntake = { ...state.intake };
-          delete newIntake[date]; // Remove today's intake
-          return { intake: newIntake };
-        });
+        set((state) => ({
+          intake: {
+            ...state.intake,
+            [date]: { calories: 0, protein: 0, carbs: 0, fats: 0, meals: [] }
+          }
+        }));
       },
       clearAll: () => set({ profile: null, intake: {} }),
     }),

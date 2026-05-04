@@ -15,6 +15,7 @@ interface SettingsSectionProps {
   onPromoPress: () => void;
   onSharePress: () => void;
   onHelpPress: () => void;
+  onThemePress: () => void;
   onResetPress: () => void;
   THEME_NAMES: any;
   C: any;
@@ -58,6 +59,7 @@ export const SettingsSection = ({
   onPromoPress,
   onSharePress,
   onHelpPress,
+  onThemePress,
   onResetPress,
   THEME_NAMES,
   C,
@@ -67,66 +69,38 @@ export const SettingsSection = ({
   return (
     <View style={{ gap: 20, marginBottom: 40 }}>
       <View>
-        <Text style={S.sectionTitle}>🎨 აირჩიე შენი სტილი</Text>
+        <Text style={S.sectionTitle}>პარამეტრები & მხარდაჭერა</Text>
         <View style={[S.settingsGroup, { marginTop: 12 }]}>
-          {Object.keys(THEME_NAMES).map((tId: any, i: number) => {
-            const tOpts = THEME_NAMES[tId];
-            const isActive = themeId === tId;
-            return (
-              <View key={tId}>
-                <TouchableOpacity
-                  style={[S.settingsRow, isActive && { backgroundColor: C.surfaceMid }]}
-                  activeOpacity={0.7}
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    if (tOpts.isPremium && !isPro) {
-                      router.push('/paywall');
-                      return;
-                    }
-                    setTheme(tId);
-                  }}
-                >
-                  <View style={[S.settingsIconWrap, { backgroundColor: tOpts.iconColor + '20' }]}>
-                    {tOpts.isPremium && !isPro ? <Lock size={18} color={tOpts.iconColor} /> : <Leaf size={18} color={tOpts.iconColor} />}
-                  </View>
-                  <View style={{ flex: 1, marginLeft: 14 }}>
-                    <Text style={S.settingsTitle}>{tOpts.name}</Text>
-                    <Text style={S.settingsSub}>{tOpts.desc}</Text>
-                  </View>
-                  {tOpts.isPremium && !isPro && (
-                    <View style={S.settingsBadge}><Text style={S.settingsBadgeText}>PRO</Text></View>
-                  )}
-                  {isActive && <CheckCircle size={20} color={C.primary} />}
-                </TouchableOpacity>
-                {i < Object.keys(THEME_NAMES).length - 1 && <View style={S.settingsDivider} />}
-              </View>
-            );
-          })}
-        </View>
-      </View>
-
-      <View>
-        <Text style={S.sectionTitle}>⚙️ შენი პრეფერენციები</Text>
-        <View style={[S.settingsGroup, { marginTop: 12 }]}>
-          <SettingsRow icon={Bell} title="შეგახსენო ხოლმე? 🔔" subtitle="ყოველდღიური მეგობრული შეხსენება"
+          <SettingsRow icon={Bell} title="შეტყობინებები" subtitle="ყოველდღიური შეხსენებები"
             color={C.blue} bg={C.blueLight} isSwitch switchValue={notifEnabled} onSwitchChange={toggleNotifications} S={S} />
+          <View style={S.settingsDivider} />
+
+          <SettingsRow 
+            icon={Leaf} 
+            title="სტილი" 
+            subtitle="თემები და ვიზუალი"
+            color={C.primaryDark} 
+            bg={C.primaryLight} 
+            onPress={onThemePress} 
+            S={S} 
+          />
           <View style={S.settingsDivider} />
 
           {!isPro && (
             <>
-              <SettingsRow icon={Gift} title="საჩუქარი გაქვს? 🎁" subtitle="გააქტიურე პრომო კოდი"
-                color={C.primaryDark} bg={C.primaryLight} onPress={onPromoPress} S={S} />
+              <SettingsRow icon={Gift} title="პრომო კოდი" subtitle="ექსკლუზიური შეთავაზებები"
+                color={C.gold} bg={C.goldLight} onPress={onPromoPress} S={S} />
               <View style={S.settingsDivider} />
             </>
           )}
 
-          <SettingsRow icon={Share2} title="მეგობრებსაც ვაჩვენოთ? ✨" subtitle="შენი პროგრესის გაზიარება"
+          <SettingsRow icon={Share2} title="გაზიარება" subtitle="მოუყევი მეგობრებს Balansi-ზე"
             color={C.teal} bg={C.tealLight} onPress={onSharePress} S={S} />
           <View style={S.settingsDivider} />
-          <SettingsRow icon={HelpCircle} title="კითხვები გაქვს? 💡" subtitle="FAQ და მხარდაჭერა"
+          <SettingsRow icon={HelpCircle} title="დახმარება & FAQ" subtitle="კითხვები და მხარდაჭერა"
             color={C.inkMid} bg={C.surfaceMid} onPress={onHelpPress} S={S} />
           <View style={S.settingsDivider} />
-          <SettingsRow icon={Trash2} title="თავიდან დავიწყოთ? 🔄"
+          <SettingsRow icon={Trash2} title="მონაცემების წაშლა" subtitle="ყველა მონაცემის განულება"
             color={C.red} bg={C.redLight} onPress={onResetPress} isDestructive S={S} />
         </View>
       </View>

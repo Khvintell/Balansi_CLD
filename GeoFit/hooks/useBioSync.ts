@@ -4,7 +4,7 @@ import { useDiaryStore } from '../store/useDiaryStore';
 import { HealthService } from '../services/healthService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const SERVER_URL = 'http://192.168.1.16:8000'; // Match HomeScreen
+import { SERVER_URL } from '../config/api';
 
 export const useBioSync = () => {
   const { 

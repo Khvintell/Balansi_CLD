@@ -30,6 +30,7 @@ import {
   LayoutList, Leaf, ShoppingBag,
   Search, Check, CheckCircle, RefreshCw,
 } from 'lucide-react-native';
+import { BrandAlert, BAlertState } from '../../components/ui/BrandAlert';
 import { useThemeStore } from '../../store/useThemeStore';
 import { getColors } from '../../config/theme';
 import { useCartStore, CartItem, CartCategory, guessCategory } from '../../store/useCartStore';
@@ -205,7 +206,7 @@ export default function CartScreen() {
   } = useCartStore();
 
   // Local UI state
-  const [showConfirm, setShowConfirm]         = useState<ConfirmState>(null);
+  const [brandAlert, setBrandAlert]           = useState<BAlertState>({ visible: false, title: '', message: '', type: 'error' });
   const [filterCat, setFilterCat]             = useState<CartCategory | null>(null);
   const [searchText, setSearchText]           = useState('');
   const [expandedCats, setExpandedCats]       = useState<Set<string>>(new Set(CATEGORIES.map((c) => c.id)));
@@ -271,43 +272,43 @@ export default function CartScreen() {
 
   const handleRequestDelete = useCallback((id: string) => {
     haptic.warning();
-    setShowConfirm({
+    setBrandAlert({
+      visible: true,
+      type: 'warning',
       title: 'პროდუქტის წაშლა',
       message: 'ნამდვილად გსურს ამ პროდუქტის სიიდან ამოღება?',
-      type: 'trash',
-      onConfirm: () => {
-        haptic.success();
-        removeItem(id);
-        setShowConfirm(null);
-      },
+      actions: [
+        { label: 'გაუქმება', onPress: () => {} },
+        { label: 'წაშლა', primary: true, danger: true, onPress: () => { haptic.success(); removeItem(id); } }
+      ]
     });
   }, [removeItem]);
 
   const handleClearAll = useCallback(() => {
     haptic.warning();
-    setShowConfirm({
+    setBrandAlert({
+      visible: true,
+      type: 'warning',
       title: 'სიის გასუფთავება',
       message: 'ნამდვილად გსურს მთლიანი სიის წაშლა?',
-      type: 'alert',
-      onConfirm: () => {
-        haptic.success();
-        clearAll();
-        setShowConfirm(null);
-      },
+      actions: [
+        { label: 'გაუქმება', onPress: () => {} },
+        { label: 'წაშლა', primary: true, danger: true, onPress: () => { haptic.success(); clearAll(); } }
+      ]
     });
   }, [clearAll]);
 
   const handleClearChecked = useCallback(() => {
     haptic.warning();
-    setShowConfirm({
+    setBrandAlert({
+      visible: true,
+      type: 'warning',
       title: 'შეძენილების წაშლა',
       message: `${checkedCount} შეძენილი პროდუქტი სიიდან ამოიშლება.`,
-      type: 'trash',
-      onConfirm: () => {
-        haptic.success();
-        clearChecked();
-        setShowConfirm(null);
-      },
+      actions: [
+        { label: 'გაუქმება', onPress: () => {} },
+        { label: 'წაშლა', primary: true, danger: true, onPress: () => { haptic.success(); clearChecked(); } }
+      ]
     });
   }, [clearChecked, checkedCount]);
 
@@ -403,26 +404,11 @@ export default function CartScreen() {
 
         {/* ── HEADER ── */}
         <View style={S.header}>
-          {/* Left spacer for centering */}
-          <View style={S.headerSide}>
-            <View style={S.brandBadge}>
-              <Leaf size={14} color={C.primary} />
-              <Text style={S.brandText}>BALANSI MARKET</Text>
+          <View style={S.headerRow}>
+            <View style={S.headerLeft}>
+              <Text style={S.headerTitle}>საყიდლების სია</Text>
+              <Text style={S.headerSub}>ორგანიზებული შოპინგი 🛒</Text>
             </View>
-          </View>
-
-          <View style={S.headerCenter}>
-            <Text style={S.headerTitle}>საყიდლები</Text>
-            {totalCount > 0 && (
-              <View style={[S.headerCount, { backgroundColor: C.primaryLight }]}>
-                <ShoppingCart size={11} color={C.primary} />
-                <Text style={[S.headerCountTxt, { color: C.primary }]}>{totalCount}</Text>
-              </View>
-            )}
-          </View>
-
-          {/* Right spacer for centering */}
-          <View style={[S.headerSide, { alignItems: 'flex-end' }]}>
             <TouchableOpacity
               style={[S.iconBtn, totalCount === 0 && { opacity: 0 }]}
               disabled={totalCount === 0}
@@ -618,18 +604,6 @@ export default function CartScreen() {
           )}
         </ScrollView>
 
-        {/* ── FLOATING ADD BUTTON ── */}
-        <View style={S.floatingAddWrap}>
-          <TouchableOpacity style={S.floatingAddBtn} onPress={openAddModal} activeOpacity={0.9}>
-            <Plus size={22} color="#FFF" />
-            <Text style={S.floatingAddTxt}>პროდუქტის დამატება</Text>
-            {totalCount > 0 && (
-              <View style={S.fabBadge}>
-                <Text style={S.fabBadgeTxt}>{totalCount}</Text>
-              </View>
-            )}
-          </TouchableOpacity>
-        </View>
 
         {/* ── ADD ITEM BOTTOM SHEET ── */}
         <Modal
@@ -786,38 +760,26 @@ export default function CartScreen() {
           </KeyboardAvoidingView>
         </Modal>
 
-        {/* ── CONFIRMATION MODAL ── */}
-        {showConfirm !== null && (
-          <Modal transparent animationType="fade" onRequestClose={() => setShowConfirm(null)}>
-            <View style={S.confirmOverlay}>
-              <View style={S.confirmBox}>
-                <View style={[
-                  S.confirmIconBox,
-                  { backgroundColor: showConfirm.type === 'trash' ? C.red + '15' : C.orange + '15' },
-                ]}>
-                  <Text style={{ fontSize: 38 }}>
-                    {showConfirm.type === 'trash' ? '🗑️' : '⚠️'}
-                  </Text>
-                </View>
-                <Text style={S.confirmTitle}>{showConfirm.title}</Text>
-                <Text style={S.confirmMsg}>{showConfirm.message}</Text>
-                <View style={S.confirmBtnRow}>
-                  <TouchableOpacity
-                    style={S.confirmCancelBtn}
-                    onPress={() => { haptic.light(); setShowConfirm(null); }}
-                  >
-                    <Text style={S.confirmCancelTxt}>გაუქმება</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={S.confirmActionBtn} onPress={showConfirm.onConfirm}>
-                    <Text style={S.confirmActionTxt}>დადასტურება</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
-          </Modal>
-        )}
+        {/* ── BRAND ALERT ── */}
+        <BrandAlert 
+          state={brandAlert} 
+          onClose={() => setBrandAlert({ ...brandAlert, visible: false })} 
+        />
 
       </SafeAreaView>
+ 
+      {/* ── PINNED ADD ACTION ── */}
+      <View style={S.pinnedAddWrap}>
+        <TouchableOpacity style={S.pinnedAddBtn} onPress={openAddModal} activeOpacity={0.9}>
+          <Plus size={22} color="#FFF" />
+          <Text style={S.pinnedAddTxt}>პროდუქტის დამატება</Text>
+          {totalCount > 0 && (
+            <View style={S.pinnedBadge}>
+              <Text style={S.pinnedBadgeTxt}>{totalCount}</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -827,33 +789,44 @@ export default function CartScreen() {
 const getStyles = (C: ReturnType<typeof getColors>) => StyleSheet.create({
   // Header
   header: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: 20, paddingTop: 4, paddingBottom: 12,
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    paddingBottom: 20,
+    backgroundColor: C.surfaceAlt,
   },
-  headerSide: { flex: 1, alignItems: 'flex-start' },
-  brandBadge: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: C.primaryLight,
-    paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20, gap: 5,
-    borderWidth: 1, borderColor: C.primaryBorder,
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  brandText: { fontSize: 9, fontWeight: '900', color: C.primaryDark, letterSpacing: 0.9 },
-  headerCenter: { 
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    // Ensure it doesn't get pushed by wide siblings
-    marginHorizontal: 10,
+  headerLeft: {
+    flex: 1,
   },
-  headerTitle: { fontSize: 24, fontWeight: '900', color: C.ink },
-  headerCount: { 
-    paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10, 
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    borderWidth: 1, borderColor: C.primaryBorder,
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: '900',
+    color: C.ink,
+    letterSpacing: -0.8,
   },
-  headerCountTxt: { fontSize: 12, fontWeight: '900' },
+  headerSub: {
+    fontSize: 13,
+    color: C.inkLight,
+    fontWeight: '600',
+    marginTop: 2,
+  },
   iconBtn: {
-    width: 44, height: 44, borderRadius: 22,
-    backgroundColor: C.surface, justifyContent: 'center', alignItems: 'center',
-    borderWidth: 1, borderColor: C.border,
-    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8, elevation: 2,
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    backgroundColor: C.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: C.border,
+    shadowColor: '#000',
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    elevation: 3,
   },
 
   // Progress card
@@ -945,9 +918,7 @@ const getStyles = (C: ReturnType<typeof getColors>) => StyleSheet.create({
   // Group header
   groupHeader: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: C.surface, borderRadius: 20, padding: 14,
-    marginBottom: 12, borderWidth: 1, borderColor: C.border,
-    shadowColor: '#000', shadowOpacity: 0.025, shadowRadius: 8, elevation: 2,
+    backgroundColor: C.surface, borderRadius: 28, padding: 22, marginBottom: 20, borderWidth: 1, borderColor: C.border,
   },
   groupEmoji: { width: 44, height: 44, borderRadius: 14, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
   groupTitle: { fontSize: 16, fontWeight: '900', color: C.ink },
@@ -959,21 +930,32 @@ const getStyles = (C: ReturnType<typeof getColors>) => StyleSheet.create({
   emptyTitle:   { fontSize: 22, fontWeight: '900', color: C.ink },
   emptySub:     { color: C.inkMid, textAlign: 'center', marginTop: 8, fontSize: 14, lineHeight: 21 },
 
-  // FAB
-  floatingAddWrap: { position: 'absolute', bottom: Platform.OS === 'ios' ? 30 : 18, left: 20, right: 20, zIndex: 10 },
-  floatingAddBtn: {
-    backgroundColor: C.ink, flexDirection: 'row', alignItems: 'center',
-    justifyContent: 'center', height: 62, borderRadius: 22, gap: 10,
-    shadowColor: C.ink, shadowOpacity: 0.28, shadowRadius: 16, elevation: 8,
+  // Pinned Bar
+  pinnedAddWrap: {
+    backgroundColor: C.surface,
+    borderTopWidth: 1,
+    borderColor: C.border,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: Platform.OS === 'ios' ? 34 : 20,
   },
-  floatingAddTxt: { color: '#FFF', fontSize: 17, fontWeight: '900' },
-  fabBadge: {
+  pinnedAddBtn: {
+    backgroundColor: C.ink,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 60,
+    borderRadius: 20,
+    gap: 10,
+  },
+  pinnedAddTxt: { color: '#FFF', fontSize: 17, fontWeight: '900', letterSpacing: -0.2 },
+  pinnedBadge: {
     position: 'absolute', right: 18, top: -8,
     minWidth: 22, height: 22, borderRadius: 11,
     backgroundColor: C.primary, justifyContent: 'center', alignItems: 'center',
     paddingHorizontal: 5, borderWidth: 2, borderColor: C.ink,
   },
-  fabBadgeTxt: { color: '#FFF', fontSize: 11, fontWeight: '900' },
+  pinnedBadgeTxt: { color: '#FFF', fontSize: 11, fontWeight: '900' },
 
   // Add Modal
   modalOverlay:  { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'flex-end' },

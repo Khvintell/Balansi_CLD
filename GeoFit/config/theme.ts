@@ -106,8 +106,8 @@ export const THEMES: Record<ThemeId, ThemeColors> = {
     teal: '#14B8A6', tealLight: '#F0FDFA',
     ink: '#0D1117', inkMid: '#334155', inkLight: '#64748B', inkFaint: '#94A3B8',
     surface: '#FFFFFF', surfaceMid: '#F1F5F9', surfaceAlt: '#F8FAFC', card: '#FFFFFF',
-    bg: '#F0F4F8', border: '#E2E8F0', borderLight: '#F1F5F9',
-    glass: 'rgba(255, 255, 255, 0.15)', glassBorder: 'rgba(255, 255, 255, 0.25)',
+    bg: '#F8FAFC', border: '#E2E8F0', borderLight: '#F1F5F9',
+    glass: 'rgba(255, 255, 255, 0.7)', glassBorder: 'rgba(255, 255, 255, 0.5)',
     darkGlass: 'rgba(15, 23, 42, 0.85)', glassWhite: 'rgba(255,255,255,0.96)',
     proBg: '#124B3E', proBox: '#0E3B30', proBorder: '#059669', proText: '#D1FAE5',
     
@@ -134,8 +134,8 @@ export const THEMES: Record<ThemeId, ThemeColors> = {
     ink: '#F8FAFC', inkMid: '#CBD5E1', inkLight: '#94A3B8', inkFaint: '#475569',
     surface: '#0F2922', surfaceMid: '#12332A', surfaceAlt: '#081713', card: '#0F2922',
     bg: '#081713', border: '#1C453A', borderLight: '#14332A',
-    glass: 'rgba(15, 41, 34, 0.6)', glassBorder: 'rgba(245, 158, 11, 0.2)',
-    darkGlass: 'rgba(8, 23, 19, 0.85)', glassWhite: 'rgba(15,41,34,0.96)',
+    glass: 'rgba(15, 41, 34, 0.8)', glassBorder: 'rgba(245, 158, 11, 0.3)',
+    darkGlass: 'rgba(8, 23, 19, 0.95)', glassWhite: 'rgba(15,41,34,0.96)',
     proBg: '#124B3E', proBox: '#0E3B30', proBorder: '#059669', proText: '#D1FAE5',
 
     success: '#F59E0B', successGlow: 'rgba(245,158,11,0.12)',
@@ -159,10 +159,10 @@ export const THEMES: Record<ThemeId, ThemeColors> = {
     gold: '#FCD34D', goldLight: 'rgba(252, 211, 77, 0.15)', goldBorder: 'rgba(252, 211, 77, 0.3)',
     teal: '#2DD4BF', tealLight: 'rgba(45, 212, 191, 0.15)',
     ink: '#F9FAFB', inkMid: '#D1D5DB', inkLight: '#9CA3AF', inkFaint: '#4B5563',
-    surface: '#18181B', surfaceMid: '#27272A', surfaceAlt: '#09090B', card: '#18181B',
-    bg: '#09090B', border: '#3F3F46', borderLight: '#27272A',
-    glass: 'rgba(24, 24, 27, 0.8)', glassBorder: 'rgba(255, 255, 255, 0.1)',
-    darkGlass: 'rgba(0, 0, 0, 0.85)', glassWhite: 'rgba(24,24,27,0.96)',
+    surface: '#121212', surfaceMid: '#1C1C1C', surfaceAlt: '#000000', card: '#121212',
+    bg: '#000000', border: '#2C2C2E', borderLight: '#1C1C1C',
+    glass: 'rgba(18, 18, 18, 0.85)', glassBorder: 'rgba(255, 255, 255, 0.1)',
+    darkGlass: 'rgba(0, 0, 0, 0.9)', glassWhite: 'rgba(18,18,18,0.96)',
     proBg: '#18181B', proBox: '#27272A', proBorder: '#3F3F46', proText: '#A1A1AA',
 
     success: '#1DB954', successGlow: 'rgba(29,185,84,0.12)',
@@ -180,7 +180,7 @@ export const THEMES: Record<ThemeId, ThemeColors> = {
 export const getColors = (id: ThemeId): ThemeColors => THEMES[id] || THEMES.standard;
 
 export const THEME_NAMES: Record<ThemeId, { name: string, desc: string, isPremium: boolean, iconColor: string }> = {
-  standard: { name: 'ბალანსი სტანდარტი', desc: 'ნათელი და სუფთა დიზაინი', isPremium: false, iconColor: '#1DB954' },
-  executive_gold: { name: 'ექსკლუზიური ოქრო', desc: 'პრემიუმ სამეფო მწვანე', isPremium: true, iconColor: '#F59E0B' },
-  obsidian_dark: { name: 'ობსიდიანი', desc: 'პროფესიონალური ღამის რეჟიმი', isPremium: true, iconColor: '#E4E4E7' }
+  standard: { name: 'ნათელი', desc: 'კლასიკური ნათელი სტილი', isPremium: false, iconColor: '#1DB954' },
+  executive_gold: { name: 'პრემიუმ სტილი', desc: 'ექსკლუზიური მუქი მწვანე', isPremium: true, iconColor: '#F59E0B' },
+  obsidian_dark: { name: 'მუქი რეჟიმი', desc: 'კლასიკური მუქი ინტერფეისი', isPremium: true, iconColor: '#E4E4E7' }
 };

@@ -25,6 +25,8 @@ import {
   Clock, Flame, ShoppingCart, Star, CheckCircle, Plus,
   Image as ImageIcon, Zap, ScanFace, Crown, Lock
 } from 'lucide-react-native';
+import { BrandAlert, BAlertState } from '../../components/ui/BrandAlert';
+import { getRecipeBadge } from '../../utils/recipeBadges';
 
 const { width: SW, height: SH } = Dimensions.get('window');
 
@@ -93,11 +95,13 @@ export default function FridgeScreen() {
   const [ingredientSearch, setIngredientSearch] = useState('');
   const [allRecipes, setAllRecipes] = useState<any[]>([]);
   const [matchedRecipes, setMatchedRecipes] = useState<any[]>([]);
+  const highProteinRecipes = React.useMemo(() => [...allRecipes].sort((a, b) => (b.protein || 0) - (a.protein || 0)).slice(0, 6), [allRecipes]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'ingredients' | 'results'>('ingredients');
   const [sortBy, setSortBy] = useState(0);
 
   const [isPro, setIsPro] = useState(false);
+  const [brandAlert, setBrandAlert] = useState<BAlertState>({ visible: false, title: '', message: '', type: 'error' });
 
   const [permission, requestPermission] = useCameraPermissions();
   const [isCameraActive, setIsCameraActive] = useState(false);
@@ -252,10 +256,21 @@ export default function FridgeScreen() {
 
   const openCamera = async () => {
     if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    if (!isPro) { router.push('/paywall'); return; }
+    if (!isPro) {
+      router.push('/paywall');
+      return;
+    }
     if (!permission?.granted) {
       const req = await requestPermission();
-      if (!req.granted) return;
+      if (!req.granted) {
+        setBrandAlert({
+          visible: true,
+          type: 'error',
+          title: 'წვდომა უარყოფილია',
+          message: 'კამერაზე წვდომა აუცილებელია სკანირებისთვის.',
+        });
+        return;
+      }
     }
     setCapturedPhoto(null); setDetectedItems(null);
     setIsScanning(false); setIsCameraActive(true); startLaser();
@@ -300,12 +315,24 @@ export default function FridgeScreen() {
         Animated.spring(resultSheetAnim, { toValue: 0, useNativeDriver: Platform.OS !== 'web', tension: 50, friction: 8 }).start();
       } else {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        Alert.alert('ვერ ვიცანი 🧐', data.message || 'საჭმელი ვერ ვიპოვე.', [{ text: 'თავიდან ცდა', onPress: retakePhoto }]);
+        setBrandAlert({
+          visible: true,
+          type: 'error',
+          title: 'ვერ ვიცანი 🧐',
+          message: data.message || 'ინგრედიენტები ვერ ვიპოვე.',
+          actions: [{ label: 'თავიდან ცდა', onPress: retakePhoto }]
+        });
       }
     } catch (error) {
       if (isCancelledRef.current) return;
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert('შეცდომა', 'სერვერთან კავშირი ვერ მოხერხდა.', [{ text: 'კარგი', onPress: retakePhoto }]);
+      setBrandAlert({
+        visible: true,
+        type: 'error',
+        title: 'შეცდომა',
+        message: 'სერვერთან კავშირი ვერ მოხერხდა.',
+        actions: [{ label: 'კარგი', onPress: retakePhoto }]
+      });
     } finally { if (!isCancelledRef.current) setIsScanning(false); }
   };
 
@@ -326,7 +353,10 @@ export default function FridgeScreen() {
   };
 
   const pickGallery = async () => {
-    if (!isPro) { router.push('/paywall'); return; }
+    if (!isPro) {
+      router.push('/paywall');
+      return;
+    }
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
@@ -354,7 +384,7 @@ export default function FridgeScreen() {
     }
 
     const cat = String(recipe.category || '').trim();
-    let isRecipePro = cat === 'სოუსები' || cat === 'წახემსება';
+    let isRecipePro = cat === 'სოუსები' || cat === 'წახემსება' || highProteinRecipes.some(r => String(r?.id) === String(recipe.id));
 
     const handlePress = () => {
       if (isRecipePro && !isPremium) {
@@ -379,30 +409,66 @@ export default function FridgeScreen() {
             transition={300}
             cachePolicy="disk"
           />
-          {isRecipePro && !isPremium && (
-            <View style={{ 
-              position: 'absolute', 
-              top: 6, 
-              left: 6, 
-              backgroundColor: 'rgba(255,255,255,0.9)', 
-              paddingHorizontal: 6, 
-              paddingVertical: 3, 
-              borderRadius: 8, 
-              zIndex: 10,
-              flexDirection: 'row',
-              alignItems: 'center',
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: 0.1,
-              shadowRadius: 2,
-              elevation: 2,
-              borderWidth: 1,
-              borderColor: 'rgba(255,215,0,0.3)'
-            }}>
-              <Crown size={10} color="#D4AF37" fill="#D4AF37" style={{ marginRight: 3 }} />
-              <Text style={{ fontSize: 9, fontWeight: '900', color: '#B8860B', letterSpacing: 0.3 }}>PRO</Text>
-            </View>
-          )}
+          {(() => {
+            const isProVisible = isRecipePro && !isPremium;
+            const badge = getRecipeBadge(recipe);
+            const BadgeIcon = badge?.icon;
+            return (
+              <>
+                {isProVisible && (
+                  <View style={{ 
+                    position: 'absolute', 
+                    top: 6, 
+                    left: 6, 
+                    backgroundColor: 'rgba(255,255,255,0.9)', 
+                    paddingHorizontal: 6, 
+                    paddingVertical: 3, 
+                    borderRadius: 8, 
+                    zIndex: 10,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 1 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 2,
+                    elevation: 2,
+                    borderWidth: 1,
+                    borderColor: 'rgba(255,215,0,0.3)'
+                  }}>
+                    <Crown size={10} color="#D4AF37" fill="#D4AF37" style={{ marginRight: 3 }} />
+                    <Text style={{ fontSize: 9, fontWeight: '900', color: '#B8860B', letterSpacing: 0.3 }}>PRO</Text>
+                  </View>
+                )}
+                
+                {badge && (
+                  <View style={{
+                    position: 'absolute',
+                    top: 6,
+                    right: 6,
+                    backgroundColor: 'rgba(255,255,255,0.95)',
+                    paddingHorizontal: 6,
+                    paddingVertical: 3,
+                    borderRadius: 8,
+                    zIndex: 10,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 1 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 2,
+                    elevation: 2,
+                    borderWidth: 1,
+                    borderColor: 'rgba(0,0,0,0.05)'
+                  }}>
+                    <BadgeIcon size={10} color={badge.color} style={{ marginRight: 3 }} />
+                    <Text style={{ fontSize: 9, fontWeight: '900', color: badge.color, letterSpacing: 0.3 }}>
+                      {badge.label}
+                    </Text>
+                  </View>
+                )}
+              </>
+            );
+          })()}
         </View>
         <View style={rc.body}>
           <Text style={rc.name} numberOfLines={2}>{recipe.name}</Text>
@@ -662,7 +728,10 @@ export default function FridgeScreen() {
         )}
       </SafeAreaView>
 
-
+      <BrandAlert 
+        state={brandAlert} 
+        onClose={() => setBrandAlert({ ...brandAlert, visible: false })} 
+      />
     </View>
   );
 }
@@ -723,15 +792,22 @@ const getCamStyles = (C: any) => StyleSheet.create({
 });
 
 const getSStyles = (C: any) => StyleSheet.create({
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: 10, paddingBottom: 15 },
-  brandPill: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.primaryLight, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, marginBottom: 8 },
+  header: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    paddingHorizontal: 20, 
+    paddingTop: 8, 
+    paddingBottom: 12 
+  },
+  brandPill: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.primaryLight, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, marginBottom: 8 },
   brandTag: { fontSize: 11, fontWeight: '900', color: C.primaryDark, textTransform: 'uppercase', letterSpacing: 0.5 },
   headerTitle: { fontSize: 32, fontWeight: '900', color: C.ink, letterSpacing: -1 },
   subHeaderTitle: { fontSize: 16, fontWeight: '600', color: C.inkLight, marginTop: 4 },
   camBtnBig: { width: 60, height: 60, borderRadius: 24, backgroundColor: C.primary, justifyContent: 'center', alignItems: 'center', shadowColor: C.primary, shadowOpacity: 0.4, shadowRadius: 15, elevation: 8 },
   statStrip: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, gap: 8, marginVertical: 15 },
   searchWrap: { paddingHorizontal: 20, marginBottom: 20 },
-  searchBox: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: C.surface, borderRadius: 20, height: 54, paddingHorizontal: 18, borderWidth: 1, borderColor: C.border, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 },
+  searchBox: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: C.surface, borderRadius: 20, height: 54, paddingHorizontal: 18, borderWidth: 1, borderColor: C.border },
   searchInput: { flex: 1, color: C.ink, fontSize: 16, fontWeight: '600' },
   tabBar: { flexDirection: 'row', marginHorizontal: 20, marginBottom: 20, backgroundColor: C.surface, borderRadius: 20, padding: 6, borderWidth: 1, borderColor: C.border },
   tab: { flex: 1, paddingVertical: 12, alignItems: 'center', borderRadius: 14, flexDirection: 'row', justifyContent: 'center', gap: 6 },
@@ -755,12 +831,7 @@ const getRcStyles = (C: any) => StyleSheet.create({
     marginBottom: 20,
     padding: 14,
     borderWidth: 1,
-    borderColor: C.border,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 15,
-    elevation: 4,
+    borderColor: C.border
   },
   imgContainer: {
     width: 100,

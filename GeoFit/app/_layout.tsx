@@ -10,6 +10,8 @@ export default function RootLayout() {
       <StatusBar barStyle="dark-content" backgroundColor="#F4F7F9" />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="onboarding" options={{ headerShown: false, gestureEnabled: false }} />
+        <Stack.Screen name="paywall" options={{ headerShown: false, presentation: 'modal' }} />
         <Stack.Screen name="details/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="avatar-editor" options={{ headerShown: false }} />
       </Stack>

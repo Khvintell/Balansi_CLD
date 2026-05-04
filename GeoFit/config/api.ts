@@ -3,11 +3,16 @@
  * Centralized server address for AI scanners and data synchronization.
  */
 
-export const SERVER_IP = '192.168.1.16';
-export const SERVER_PORT = '8000';
-export const SERVER_URL = `http://${SERVER_IP}:${SERVER_PORT}`;
+// Use your Vercel URL here after deployment
+const PRODUCTION_URL = 'https://balansi-api.vercel.app'; 
+const LOCAL_URL = 'http://192.168.1.16:8000';
+
+// FOR TESTING: Always use Production URL
+export const SERVER_URL = PRODUCTION_URL; 
 
 export const API_ENDPOINTS = {
   VERIFY_WEIGHT: `${SERVER_URL}/verify-weight`,
-  // Add other endpoints as needed
+  SYNC_BIOMETRICS: `${SERVER_URL}/api/sync-biometrics`,
+  RECIPES: `${SERVER_URL}/recipes/`,
+  SCAN_FOOD: `${SERVER_URL}/api/scan-food`,
 };

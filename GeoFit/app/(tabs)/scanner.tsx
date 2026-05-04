@@ -9,14 +9,14 @@ import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { Image } from 'expo-image';
 import { BlurView } from 'expo-blur';
-import { Svg, Defs, Rect, Mask as SvgMask } from 'react-native-svg';
+import { Svg, Defs, Rect, Mask as SvgMask, Circle, G } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import {
-  Scan, Zap, Leaf, Image as ImageIcon, Activity, X,
-  Camera, CheckCircle, Crown, Lock, ChevronRight, Scale,
-  Lightbulb, RotateCcw
+  Scan, Zap, Leaf, Image as ImageIcon, Activity, Search, X, Camera, RotateCcw, 
+  CheckCircle, Lightbulb, Crown, Scale, PieChart, Info, HelpCircle, ChevronRight
 } from 'lucide-react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
+import { BrandAlert, BAlertState } from '../../components/ui/BrandAlert';
 import { useThemeStore } from '../../store/useThemeStore';
 import { getColors } from '../../config/theme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -34,6 +34,10 @@ const LOADING_MESSAGES = [
   "ვაღვიძებთ AI შეფ-მზარეულს... 👨‍🍳",
   "ვსწავლობთ ინგრედიენტებს... 🔍",
   "ვითვლით მაკროებს... 🧮",
+  "ვაანალიზებთ პორციის ზომას... ⚖️",
+  "ვეძებთ კვებით ღირებულებას... 📚",
+  "ვადარებთ მონაცემებს... 🔄",
+  "ვამზადებთ ანგარიშს... 📋",
   "თითქმის მზადაა! ✨"
 ];
 
@@ -65,10 +69,12 @@ export default function ScannerScreen() {
   const [userWeight, setUserWeight] = useState<number>(70);
 
   // 🚀 FREEMIUM STATES 🚀
-  const [isPro, setIsPro] = useState(false);
+  const { addMeal, isPremium: isPro } = useDiaryStore();
   const [scansUsed, setScansUsed] = useState(0);
-  const [daysUsed, setDaysUsed] = useState(0); // 0, 1, 2 = allowed. 3+ = blocked
-  const [showPaywall, setShowPaywall] = useState(false);
+  const [proScansMonth, setProScansMonth] = useState(0); // Monthly limit for PRO
+  const [daysUsed, setDaysUsed] = useState(0); // 0, 1 = allowed. 2+ = blocked
+  const [brandAlert, setBrandAlert] = useState<BAlertState>({ visible: false, title: '', message: '', type: 'error' });
+  const [showWeightInfo, setShowWeightInfo] = useState(false);
 
   const laserAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -123,26 +129,16 @@ export default function ScannerScreen() {
     if (!dataLoaded.current) {
       loadUserDataAndLimits();
       dataLoaded.current = true;
-    } else {
-      // ამოწმებს PRO სტატუსს, თუ პროფილში შეიცვალა
-      checkProStatus();
     }
   }, []));
 
   useEffect(() => {
     let interval: any;
     if (isScanning) {
-      interval = setInterval(() => setLoadingMsgIdx(p => (p + 1) % LOADING_MESSAGES.length), 2000);
+      interval = setInterval(() => setLoadingMsgIdx(p => (p + 1) % LOADING_MESSAGES.length), 1500);
     } else setLoadingMsgIdx(0);
     return () => clearInterval(interval);
   }, [isScanning]);
-
-  const checkProStatus = async () => {
-    try {
-      const profileStr = await AsyncStorage.getItem('userProfile');
-      if (profileStr) setIsPro(JSON.parse(profileStr).isPro || false);
-    } catch { }
-  };
 
   const loadUserDataAndLimits = async () => {
     try {
@@ -150,7 +146,6 @@ export default function ScannerScreen() {
       if (profileStr) {
         const profile = JSON.parse(profileStr);
         if (profile.weight) setUserWeight(parseFloat(profile.weight));
-        setIsPro(profile.isPro || false);
       }
 
       const today = new Date();
@@ -171,11 +166,22 @@ export default function ScannerScreen() {
       const firstDateStr = await AsyncStorage.getItem('balansi_first_use_date');
       if (firstDateStr) {
         const firstDate = new Date(firstDateStr);
-        // Reset hours to compare only dates
         const d1 = new Date(firstDate.getFullYear(), firstDate.getMonth(), firstDate.getDate());
         const d2 = new Date(today.getFullYear(), today.getMonth(), today.getDate());
         const diffDays = Math.round((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24));
         setDaysUsed(diffDays);
+      }
+
+      // 🤫 PRO Silent Monthly Limit Logic
+      const currentMonth = today.getMonth() + 1; // 1-12
+      const lastProMonth = await AsyncStorage.getItem('balansi_pro_month');
+      if (lastProMonth !== currentMonth.toString()) {
+        await AsyncStorage.setItem('balansi_pro_month', currentMonth.toString());
+        await AsyncStorage.setItem('balansi_pro_scans', '0');
+        setProScansMonth(0);
+      } else {
+        const proUsed = await AsyncStorage.getItem('balansi_pro_scans');
+        setProScansMonth(proUsed ? parseInt(proUsed) : 0);
       }
     } catch (e) {
       console.log("Error loading limits", e);
@@ -183,7 +189,12 @@ export default function ScannerScreen() {
   };
 
   const incrementScanCount = async () => {
-    if (isPro) return;
+    if (isPro) {
+      const newProCount = proScansMonth + 1;
+      setProScansMonth(newProCount);
+      await AsyncStorage.setItem('balansi_pro_scans', newProCount.toString());
+      return;
+    }
 
     // Set first use date if not exists
     const firstDateStr = await AsyncStorage.getItem('balansi_first_use_date');
@@ -217,10 +228,31 @@ export default function ScannerScreen() {
     if (!cameraRef.current || isScanning) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
 
-    // 🛑 დაცვა: 3 დღიანი ტრიალი + დღეში 3 სკანირება
+    // 🛑 Gatekeeper: Free Limit (2 per day / 3 days trial)
     if (!isPro) {
-      if (daysUsed >= 3 || scansUsed >= 3) {
-        router.push('/paywall');
+      if (daysUsed >= 3 || scansUsed >= 2) {
+        setBrandAlert({
+          visible: true,
+          type: 'warning',
+          title: 'ლიმიტი ამოიწურა 🛑',
+          message: 'უფასო სკანირების ლიმიტი დღეისთვის ამოწურულია. გადადი PRO-ზე ულიმიტო ანალიზისთვის.',
+          actions: [
+            { label: 'მოგვიანებით', onPress: () => {} },
+            { label: 'გააქტიურება 🚀', primary: true, onPress: () => router.push('/paywall') }
+          ]
+        });
+        return;
+      }
+    } else {
+      // 🤫 Silent PRO limit (200 scans per month)
+      if (proScansMonth >= 200) {
+        setBrandAlert({
+          visible: true,
+          type: 'info',
+          title: 'ტექნიკური პაუზა 🛠️',
+          message: 'AI სერვერების მაღალი დატვირთვის გამო, სკანირება დროებით შეზღუდულია. გთხოვთ სცადოთ ხვალ.',
+          actions: [{ label: 'გასაგებია', onPress: () => {} }]
+        });
         return;
       }
     }
@@ -235,7 +267,12 @@ export default function ScannerScreen() {
       const photo = await cameraRef.current.takePictureAsync({ quality: 0.3, skipProcessing: true });
       if (photo?.uri) processImage(photo.uri);
     } catch (error) {
-      Alert.alert('შეცდომა', 'ფოტოს გადაღება ვერ მოხერხდა.');
+      setBrandAlert({
+        visible: true,
+        type: 'error',
+        title: 'შეცდომა',
+        message: 'ფოტოს გადაღება ვერ მოხერხდა.',
+      });
       Animated.timing(laserOpacity, { toValue: 1, duration: 300, useNativeDriver: Platform.OS !== 'web' }).start();
     }
   };
@@ -246,7 +283,16 @@ export default function ScannerScreen() {
     // 🛑 დაცვა გალერეიდან არჩევაზეც!
     if (!isPro) {
       if (daysUsed >= 3 || scansUsed >= 3) {
-        router.push('/paywall');
+        setBrandAlert({
+          visible: true,
+          type: 'warning',
+          title: 'ლიმიტი ამოიწურა 🛑',
+          message: 'უფასო სკანირების ლიმიტი დღეისთვის ამოწურულია. გადადი PRO-ზე ულიმიტო ანალიზისთვის.',
+          actions: [
+            { label: 'მოგვიანებით', onPress: () => {} },
+            { label: 'გააქტიურება 🚀', primary: true, onPress: () => router.push('/paywall') }
+          ]
+        });
         return;
       }
     }
@@ -275,6 +321,10 @@ export default function ScannerScreen() {
       const formData = new FormData();
       formData.append('file', { uri: manipResult.uri, name: 'scan.jpg', type: 'image/jpeg' } as any);
 
+      // Final check before network call
+      if (!isPro && scansUsed >= 2) return;
+      if (isPro && proScansMonth >= 200) return;
+
       const response = await fetch(`${SERVER_URL}/api/scan-food`, {
         method: 'POST',
         headers: { 'Accept': 'application/json' },
@@ -287,7 +337,30 @@ export default function ScannerScreen() {
 
       if (response.ok && data.success) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        setResultData(data.data);
+        
+        // Normalize data: ensure per_100g and estimated_weight always exist
+        const raw = data.data;
+        const weight = raw.estimated_weight && raw.estimated_weight > 0 ? raw.estimated_weight : 350;
+        const cal = raw.calories || 0;
+        const prot = raw.protein || 0;
+        const carb = raw.carbs || 0;
+        const fat = raw.fat || 0;
+        
+        if (!raw.estimated_weight || raw.estimated_weight <= 0) {
+          raw.estimated_weight = weight;
+        }
+        
+        // If per_100g is missing or empty, compute from totals
+        if (!raw.per_100g || !raw.per_100g.calories) {
+          raw.per_100g = {
+            calories: weight > 0 ? Math.round((cal / weight) * 100) : 0,
+            protein: weight > 0 ? Math.round((prot / weight) * 100) : 0,
+            carbs: weight > 0 ? Math.round((carb / weight) * 100) : 0,
+            fat: weight > 0 ? Math.round((fat / weight) * 100) : 0,
+          };
+        }
+        
+        setResultData(raw);
 
         await incrementScanCount();
 
@@ -298,16 +371,24 @@ export default function ScannerScreen() {
 
       } else {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        Alert.alert('შეცდომა', data.message || 'საჭმელი ვერ ამოვიცანით.', [{ text: 'თავიდან ცდა', onPress: retakePhoto }]);
+        setBrandAlert({
+          visible: true,
+          type: 'error',
+          title: 'ვერ ვიცანი 🧐',
+          message: data.message || 'საჭმელი ვერ ამოვიცანით.',
+          actions: [{ label: 'თავიდან ცდა', onPress: retakePhoto }]
+        });
       }
     } catch (error) {
       if (isCancelledRef.current) return;
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert(
-        'საჭიროა ინტერნეტი 📡', 
-        'სამწუხაროდ, AI სკანერი ინტერნეტის გარეშე ვერ მუშაობს. გთხოვთ, შეამოწმოთ კავშირი.', 
-        [{ text: 'კარგი', onPress: retakePhoto }]
-      );
+      setBrandAlert({
+        visible: true,
+        type: 'info',
+        title: 'საჭიროა ინტერნეტი 📡',
+        message: 'სამწუხაროდ, AI სკანერი ინტერნეტის გარეშე ვერ მუშაობს. გთხოვთ, შეამოწმოთ კავშირი.',
+        actions: [{ label: 'კარგი', onPress: retakePhoto }]
+      });
     } finally {
       if (!isCancelledRef.current) setIsScanning(false);
     }
@@ -317,6 +398,14 @@ export default function ScannerScreen() {
     Haptics.selectionAsync();
     isCancelledRef.current = true;
     setIsScanning(false);
+    
+    // Clear state immediately to ensure it works even if animation doesn't trigger
+    if (!resultData) {
+      setCapturedPhoto(null);
+      Animated.timing(laserOpacity, { toValue: 1, duration: 300, useNativeDriver: Platform.OS !== 'web' }).start();
+      return;
+    }
+
     Animated.timing(resultSheetAnim, { toValue: H, duration: 300, useNativeDriver: Platform.OS !== 'web' }).start(() => {
       setResultData(null);
       setCapturedPhoto(null);
@@ -324,7 +413,126 @@ export default function ScannerScreen() {
     });
   };
 
-  const { addMeal } = useDiaryStore();
+  const WeightTrustModal = () => {
+    if (!resultData) return null;
+    return (
+      <Modal visible={showWeightInfo} transparent animationType="fade">
+        <TouchableOpacity 
+          style={styles.modalOverlay} 
+          activeOpacity={1} 
+          onPress={() => setShowWeightInfo(false)}
+        >
+          <BlurView intensity={80} tint="dark" style={styles.modalBlur}>
+            <View style={styles.trustCard}>
+              <View style={styles.trustHeader}>
+                <Scale size={24} color={DS.emerald} />
+                <Text style={styles.trustTitle}>როგორ ვითვლით წონას?</Text>
+                <TouchableOpacity onPress={() => setShowWeightInfo(false)}>
+                  <X size={20} color={DS.inkLight} />
+                </TouchableOpacity>
+              </View>
+
+              <Text style={styles.trustDesc}>
+                Balansi AI აანალიზებს კერძის მოცულობას და ადარებს მას სტანდარტულ საგნებს (მაგ: თეფშის ზომა ~26სმ, ჩანგალი, ხელის მტევანი).
+              </Text>
+
+              <View style={styles.formulaBox}>
+                <View style={styles.formulaItem}>
+                  <View style={styles.formulaIcon}><Search size={18} color={DS.emerald}/></View>
+                  <Text style={styles.formulaLabel}>მოცულობა</Text>
+                  <Text style={styles.formulaSub}>ვიზუალური ანალიზი</Text>
+                </View>
+                <Text style={styles.formulaOp}>×</Text>
+                <View style={styles.formulaItem}>
+                  <View style={styles.formulaIcon}><Activity size={18} color={DS.warning}/></View>
+                  <Text style={styles.formulaLabel}>სიმკვრივე</Text>
+                  <Text style={styles.formulaSub}>პროდუქტის ტიპი</Text>
+                </View>
+                <Text style={styles.formulaOp}>=</Text>
+                <View style={styles.formulaItem}>
+                  <View style={styles.formulaIcon}><Scale size={18} color={DS.danger}/></View>
+                  <Text style={styles.formulaLabel}>წონა</Text>
+                  <Text style={styles.formulaSub}>~{resultData.estimated_weight}გ</Text>
+                </View>
+              </View>
+
+              {resultData.weight_reasoning && (
+                <View style={styles.reasoningBox}>
+                  <Lightbulb size={16} color={DS.warning} style={{ marginRight: 8 }} />
+                  <Text style={styles.reasoningText}>
+                    <Text style={{ fontWeight: 'bold' }}>AI-ს ლოგიკა: </Text>
+                    {resultData.weight_reasoning}
+                  </Text>
+                </View>
+              )}
+
+              <Text style={styles.trustFooter}>
+                * ეს არის სავარაუდო წონა. მაქსიმალური სიზუსტისთვის გამოიყენეთ სამზარეულოს სასწორი.
+              </Text>
+
+              <TouchableOpacity 
+                style={styles.trustCloseBtn} 
+                onPress={() => setShowWeightInfo(false)}
+              >
+                <Text style={styles.trustCloseBtnText}>გავიგე</Text>
+              </TouchableOpacity>
+            </View>
+          </BlurView>
+        </TouchableOpacity>
+      </Modal>
+    );
+  };
+
+  const MacroChart = ({ protein, carbs, fat, calories }: any) => {
+    const total = (protein || 0) + (carbs || 0) + (fat || 0) || 1;
+    const pPct = (protein || 0) / total;
+    const cPct = (carbs || 0) / total;
+    const fPct = (fat || 0) / total;
+
+    const size = 110;
+    const strokeWidth = 10;
+    const center = size / 2;
+    const radius = (size - strokeWidth) / 2;
+    const circumference = 2 * Math.PI * radius;
+
+    const pOffset = 0;
+    const cOffset = circumference * pPct;
+    const fOffset = circumference * (pPct + cPct);
+
+    return (
+      <View style={styles.chartContainer}>
+        <Svg width={size} height={size}>
+          <G rotation="-90" origin={`${center}, ${center}`}>
+            <Circle cx={center} cy={center} r={radius} stroke="#E5E7EB" strokeWidth={strokeWidth} fill="transparent" />
+            <Circle cx={center} cy={center} r={radius} stroke={DS.emerald} strokeWidth={strokeWidth} strokeDasharray={`${circumference * pPct} ${circumference}`} strokeDashoffset={0} fill="transparent" />
+            <Circle cx={center} cy={center} r={radius} stroke={DS.warning} strokeWidth={strokeWidth} strokeDasharray={`${circumference * cPct} ${circumference}`} strokeDashoffset={-cOffset} fill="transparent" />
+            <Circle cx={center} cy={center} r={radius} stroke={DS.danger} strokeWidth={strokeWidth} strokeDasharray={`${circumference * fPct} ${circumference}`} strokeDashoffset={-fOffset} fill="transparent" />
+          </G>
+        </Svg>
+        <View style={styles.chartInner}>
+          <Text style={styles.chartCalNum}>{calories}</Text>
+          <Text style={styles.chartCalUnit}>კკალ</Text>
+        </View>
+      </View>
+    );
+  };
+
+  const MacroRow = ({ label, val100, valTotal, unit, color, estimatedWeight }: any) => {
+    // Use server-provided per_100g (always populated), fallback to frontend calc
+    const total = valTotal || 0;
+    const weight = estimatedWeight || 0;
+    let per100 = val100;
+    if (per100 == null || per100 === undefined) {
+      per100 = weight > 0 ? Math.round((total / weight) * 100) : 0;
+    }
+    return (
+      <View style={styles.tableRow}>
+        <Text style={[styles.tableCell, { flex: 2, color: DS.inkMid, textAlign: 'left' }]}>{label}</Text>
+        <Text style={[styles.tableCell, { color: DS.inkLight }]}>{per100}{unit}</Text>
+        <Text style={[styles.tableCell, styles.cellBold, { color }]}>{total}{unit}</Text>
+      </View>
+    );
+  };
 
   const handleAddToDiary = async () => {
     if (added) return;
@@ -339,22 +547,34 @@ export default function ScannerScreen() {
         name: resultData.name,
         calories: resultData.calories,
         time: new Date().toLocaleTimeString('ka-GE', { hour: '2-digit', minute: '2-digit' }),
-        source: 'AI Scanner'
+        source: 'AI Scanner',
+        image_url: capturedPhoto // 🚀 Store image URI!
       }, {
         protein: resultData.protein,
         carbs: resultData.carbs,
-        fats: resultData.fat // Note: store uses 'fats', scanner uses 'fat'
+        fats: resultData.fat
       });
 
       setTimeout(() => {
-        Alert.alert("✅ დამატებულია!", `${resultData.calories} კკალ შევიდა დღიურში.`, [
-          { text: "კამერაში დაბრუნება", onPress: retakePhoto, style: "cancel" },
-          { text: "დღიურის ნახვა", onPress: () => { retakePhoto(); router.push('/diary'); } }
-        ]);
+        setBrandAlert({
+          visible: true,
+          type: 'success',
+          title: '✅ დამატებულია!',
+          message: `${resultData.calories} კკალ შევიდა დღიურში.`,
+          actions: [
+            { label: 'კამერა', onPress: retakePhoto },
+            { label: 'დღიური', primary: true, onPress: () => { retakePhoto(); router.push('/diary'); } }
+          ]
+        });
       }, 300);
     } catch (error) {
       setAdded(false);
-      Alert.alert("შეცდომა", "მონაცემების შენახვა ვერ მოხერხდა.");
+      setBrandAlert({
+        visible: true,
+        type: 'error',
+        title: 'შეცდომა',
+        message: 'მონაცემების შენახვა ვერ მოხერხდა.',
+      });
     }
   };
 
@@ -387,12 +607,6 @@ export default function ScannerScreen() {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
       <CameraView ref={cameraRef} style={StyleSheet.absoluteFillObject} facing="back" enableTorch={flash} />
-
-      {capturedPhoto && (
-        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: '#000' }]}>
-          <Image source={{ uri: capturedPhoto }} style={StyleSheet.absoluteFillObject} contentFit="cover" />
-        </View>
-      )}
 
       <Animated.View style={[StyleSheet.absoluteFillObject, { backgroundColor: '#FFF', opacity: flashAnim, zIndex: 100 }]} pointerEvents="none" />
 
@@ -439,13 +653,20 @@ export default function ScannerScreen() {
           <View style={[styles.corner, styles.bottomLeft]} />
           <View style={[styles.corner, styles.bottomRight]} />
 
+          {capturedPhoto && (
+            <View style={StyleSheet.absoluteFill}>
+              <Image source={{ uri: capturedPhoto }} style={StyleSheet.absoluteFillObject} contentFit="cover" />
+              {isScanning && (
+                <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+              )}
+            </View>
+          )}
+
           {!capturedPhoto && (
             <AnimatedReanimated.View style={[styles.liveIndicator, liveDotStyle]} />
           )}
 
-          {!capturedPhoto && (
-            <Animated.View style={[styles.laser, { transform: [{ translateY: laserAnim }], opacity: laserOpacity }]} />
-          )}
+          <Animated.View style={[styles.laser, { transform: [{ translateY: laserAnim }], opacity: (isScanning || !capturedPhoto) ? 1 : 0 }]} />
 
           {isScanning && (
             <View style={styles.scanningGlassOverlay}>
@@ -463,16 +684,18 @@ export default function ScannerScreen() {
       {/* ── 🔘 BOTTOM ACTION AREA (TEXT & CONTROLS) ── */}
       {!resultData && !isScanning && (
         <SafeAreaView style={styles.controlsBottomArea}>
-          <Animated.View style={{ opacity: laserOpacity, alignItems: 'center', paddingHorizontal: 35, marginBottom: 35 }}>
-            <Text style={styles.instructionTitle}>დროა ვისადილოთ! 🍽️</Text>
-            <Text style={styles.instructionSub}>დაიჭირე კამერა თეფშის გასწვრივ. მე შევაფასებ ულუფას და დაგითვლი მაკროებს.</Text>
-          </Animated.View>
+          {!capturedPhoto && (
+            <Animated.View style={{ opacity: laserOpacity, alignItems: 'center', paddingHorizontal: 35, marginBottom: 35 }}>
+              <Text style={styles.instructionTitle}>დროა ვისადილოთ! 🍽️</Text>
+              <Text style={styles.instructionSub}>დაიჭირე კამერა თეფშის გასწვრივ. მე შევაფასებ ულუფას და დაგითვლი მაკროებს.</Text>
+            </Animated.View>
+          )}
 
           {!isPro && (
             <View style={{ marginBottom: 25, alignSelf: 'center' }}>
               <BlurView intensity={80} tint="dark" style={styles.limitPill}>
                 <Zap size={14} color="#F59E0B" fill="#F59E0B" style={{ marginRight: 6 }} />
-                <Text style={styles.limitPillTxt}>დარჩა {Math.max(0, 3 - scansUsed)} უფასო სკანირება</Text>
+                <Text style={styles.limitPillTxt}>დარჩა {Math.max(0, 2 - scansUsed)} უფასო სკანირება</Text>
               </BlurView>
             </View>
           )}
@@ -500,71 +723,75 @@ export default function ScannerScreen() {
         {resultData && capturedPhoto && (
           <SafeAreaView style={{ flex: 1 }}>
             <View style={styles.sheetHandle} />
-            <Animated.ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 40 }} style={{ opacity: contentFadeAnim }}>
+            <Animated.ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 20 }} style={{ flex: 1, opacity: contentFadeAnim }}>
               <View style={styles.resultImageWrap}>
                 <Image source={{ uri: capturedPhoto }} style={styles.resultImage} contentFit="cover" transition={300} />
               </View>
 
-              <Text style={styles.foodName}>{resultData.name}</Text>
+              <View style={styles.headerRowWrap}>
+                <Text style={styles.wowText}>{resultData.wow_msg || "კლინიკური ანალიზი"}</Text>
+                <Text style={styles.foodName}>{resultData.name}</Text>
+              </View>
 
-              {/* 🚀 PRO მომხმარებლებს უჩანთ MET კალკულატორი, სხვებს უბრალოდ კალორიები */}
-              {isPro ? (
-                <View style={styles.topInfoBox}>
-                  <View style={styles.infoCol}>
-                    <Text style={styles.infoLabel}>კალორია</Text>
-                    <Text style={styles.calValue}>{resultData.calories} <Text style={styles.calUnit}>კკალ</Text></Text>
+              <View style={styles.summarySection}>
+                <View style={styles.chartWrapper}>
+                  <MacroChart protein={resultData.protein} carbs={resultData.carbs} fat={resultData.fat} calories={resultData.calories} />
+                  <View style={styles.chartLegend}>
+                    <View style={styles.legendItem}><View style={[styles.dot, { backgroundColor: DS.emerald }]} /><Text style={styles.legendText}>ცილა</Text></View>
+                    <View style={styles.legendItem}><View style={[styles.dot, { backgroundColor: DS.warning }]} /><Text style={styles.legendText}>ნახშ.</Text></View>
+                    <View style={styles.legendItem}><View style={[styles.dot, { backgroundColor: DS.danger }]} /><Text style={styles.legendText}>ცხიმი</Text></View>
                   </View>
-                  <View style={styles.vDivider} />
-                  <View style={[styles.infoCol, { flex: 1.2 }]}>
-                    <View style={styles.burnHeader}>
-                      <Activity size={14} color={DS.danger} style={{ marginRight: 6 }} />
-                      <Text style={styles.infoLabel}>დასაწვავად</Text>
+                </View>
+
+                <TouchableOpacity 
+                  style={styles.portionCard} 
+                  activeOpacity={0.7}
+                  onPress={() => setShowWeightInfo(true)}
+                >
+                  <View style={styles.portionIconWrap}>
+                    <Scale size={20} color={DS.emerald} />
+                  </View>
+                  <View style={styles.portionInfo}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <Text style={styles.portionLabel}>სავარაუდო წონა</Text>
+                      <Info size={12} color={DS.inkLight} style={{ marginLeft: 4 }} />
                     </View>
-                    <Text style={styles.burnValue}>~{calculateBurnTime(resultData.calories, userWeight)} <Text style={styles.burnUnit}>წთ</Text></Text>
-                    <Text style={styles.burnSubtext}>აღმართზე სიარული</Text>
+                    <Text style={styles.portionValue}>~{resultData.estimated_weight || 0} გრამი</Text>
                   </View>
-                </View>
-              ) : (
-                <View style={styles.basicCalBox}>
-                  <Text style={styles.basicCalLabel}>ჯამური კალორია</Text>
-                  <Text style={styles.basicCalValue}>{resultData.calories} <Text style={styles.basicCalUnit}>კკალ</Text></Text>
-                </View>
-              )}
+                  <ChevronRight size={18} color={DS.inkLight} style={{ marginLeft: 'auto', opacity: 0.5 }} />
+                </TouchableOpacity>
+              </View>
 
-              <View style={styles.macroHorizontalContainer}>
-                <View style={styles.macroCol}>
-                  <Text style={styles.macroHeader}>ნახშირწყალი</Text>
-                  <View style={styles.macroTrack}><View style={[styles.macroFill, { backgroundColor: DS.warning, width: mw.c as any }]} /></View>
-                  <Text style={styles.macroGrams}>{resultData.carbs}გ</Text>
+              {/* 🚀 დეტალური მაკროების ბარათი */}
+              <View style={styles.detailedMacroCard}>
+                <View style={styles.macroHeaderRow}>
+                  <Text style={styles.macroCardTitle}>კვებითი ღირებულება</Text>
                 </View>
-                <View style={styles.macroCol}>
-                  <Text style={styles.macroHeader}>ცხიმი</Text>
-                  <View style={styles.macroTrack}><View style={[styles.macroFill, { backgroundColor: DS.danger, width: mw.f as any }]} /></View>
-                  <Text style={styles.macroGrams}>{resultData.fat}გ</Text>
-                </View>
-                <View style={styles.macroCol}>
-                  <Text style={styles.macroHeader}>ცილა</Text>
-                  <View style={styles.macroTrack}><View style={[styles.macroFill, { backgroundColor: DS.emerald, width: mw.p as any }]} /></View>
-                  <Text style={styles.macroGrams}>{resultData.protein}გ</Text>
+
+                <View style={styles.macroTable}>
+                  <View style={styles.tableHeader}>
+                    <Text style={[styles.tableCell, { flex: 2, textAlign: 'left' }]}>ელემენტი</Text>
+                    <Text style={styles.tableCell}>100გ-ში</Text>
+                    <Text style={[styles.tableCell, styles.cellBold]}>პორციაში</Text>
+                  </View>
+
+                  <MacroRow label="კალორია" val100={resultData.per_100g?.calories} valTotal={resultData.calories} unit="კკალ" color={DS.onyx} estimatedWeight={resultData.estimated_weight} />
+                  <MacroRow label="ცილა" val100={resultData.per_100g?.protein} valTotal={resultData.protein} unit="გ" color={DS.emerald} estimatedWeight={resultData.estimated_weight} />
+                  <MacroRow label="ნახშირწყალი" val100={resultData.per_100g?.carbs} valTotal={resultData.carbs} unit="გ" color={DS.warning} estimatedWeight={resultData.estimated_weight} />
+                  <MacroRow label="ცხიმი" val100={resultData.per_100g?.fat} valTotal={resultData.fat} unit="გ" color={DS.danger} estimatedWeight={resultData.estimated_weight} />
                 </View>
               </View>
 
-              {/* 🍃 AI შეფასება და საინტერესო ფაქტი (Visible to all) */}
-              <View style={styles.insightBoxPremium}>
-                <View style={styles.insightHeaderPremium}>
-                  <Zap size={18} color={DS.emerald} style={{ marginRight: 8 }} />
-                  <Text style={styles.insightTitlePremium}>AI შეფასება</Text>
-                </View>
-                <Text style={styles.insightTextPremium}>{resultData.description}</Text>
+
+              <View style={styles.analysisBox}>
+                <Text style={styles.analysisTitle}>ნუტრიციოლოგიური შეფასება</Text>
+                <Text style={styles.analysisText}>{resultData.description}</Text>
               </View>
 
               {resultData.fun_fact && (
-                <View style={[styles.insightBoxPremium, { backgroundColor: DS.warning + '10', borderColor: DS.warning + '30' }]}>
-                  <View style={styles.insightHeaderPremium}>
-                    <Lightbulb size={18} color={DS.warning} style={{ marginRight: 8 }} />
-                    <Text style={[styles.insightTitlePremium, { color: DS.warning }]}>საინტერესო ფაქტი</Text>
-                  </View>
-                  <Text style={[styles.insightTextPremium, { color: DS.inkMid }]}>{resultData.fun_fact}</Text>
+                <View style={styles.funFactBox}>
+                  <Text style={[styles.analysisTitle, { color: DS.warning }]}>საინტერესო ფაქტი</Text>
+                  <Text style={styles.funFactText}>{resultData.fun_fact}</Text>
                 </View>
               )}
 
@@ -573,12 +800,12 @@ export default function ScannerScreen() {
             <Animated.View style={[styles.footerWrap, { opacity: contentFadeAnim }]}>
               <View style={styles.footerRow}>
                 <TouchableOpacity style={styles.backBtn} onPress={retakePhoto}>
-                  <RotateCcw size={20} color={DS.inkMid} />
+                  <RotateCcw size={22} color={DS.inkMid} />
                 </TouchableOpacity>
 
                 <TouchableOpacity style={[styles.logBtn, added && { backgroundColor: DS.emerald }]} onPress={handleAddToDiary} activeOpacity={0.85}>
                   {added ? (
-                    <><CheckCircle size={20} color="#FFF" style={{ marginRight: 8 }} /><Text style={styles.logBtnText}>დამატებულია</Text></>
+                    <><CheckCircle size={22} color="#FFF" style={{ marginRight: 8 }} /><Text style={styles.logBtnText}>დამატებულია</Text></>
                   ) : (
                     <Text style={styles.logBtnText}>დღიურში დამატება</Text>
                   )}
@@ -589,46 +816,12 @@ export default function ScannerScreen() {
         )}
       </Animated.View>
 
-      {/* ── 🚀 THE MASTER PAYWALL (Scanner Edition) 🚀 ── */}
-      <Modal visible={showPaywall} animationType="slide" transparent>
-        <View style={pw.overlay}>
-          <View style={pw.sheet}>
+      <WeightTrustModal />
 
-            <View style={pw.iconWrap}>
-              <Crown size={32} color={DS.gold} />
-            </View>
-
-            <Text style={pw.title}>სრული კონტროლი კვებაზე 🔍</Text>
-
-            <Text style={pw.mainText}>
-              გახდი Balansi PRO კლუბის წევრი და დაივიწყე ლიმიტები. გახსენი ულიმიტო ფოტო-ანალიზი, შეფის პროფესიონალური ინსაიტები და MET-კალკულატორი ულუფის დასაწვავად. შენი სხეული იმსახურებს საუკეთესო ტექნოლოგიას – ნუ გაჩერდები მიზნამდე.            </Text>
-
-            <View style={pw.ecosystemBox}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-                {/* 🚀 Leaf Icon Added Here 🚀 */}
-                <Leaf size={16} color={DS.emerald} style={{ marginRight: 6 }} />
-                <Text style={pw.ecosystemTitle}>PRO პრივილეგიები</Text>
-              </View>
-              <Text style={pw.ecosystemText}>
-                ✦ პლუს, მიიღე სრული წვდომა პირად შეფ-მზარეულსა და ექსკლუზიურ ფიტნეს  რეცეპტებზე.
-              </Text>
-            </View>
-
-            <TouchableOpacity style={pw.buyBtn} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); setShowPaywall(false); router.push('/profile'); }}>
-              <Text style={pw.buyBtnTxt}>აიყვანე შედეგი ახალ ლეველზე 🚀</Text>
-            </TouchableOpacity>
-
-            {/* 🚀 Text Clipping Fix & Full Container Buffer 🚀 */}
-            <View style={pw.cancelWrapper}>
-              <TouchableOpacity style={pw.cancelBtn} onPress={() => setShowPaywall(false)}>
-                <Text style={pw.cancelTxt}>არა, მოგვიანებით</Text>
-              </TouchableOpacity>
-            </View>
-
-          </View>
-        </View>
-      </Modal>
-
+      <BrandAlert 
+        state={brandAlert} 
+        onClose={() => setBrandAlert({ ...brandAlert, visible: false })} 
+      />
     </View>
   );
 }
@@ -739,7 +932,7 @@ const getStyles = (DS: any) => StyleSheet.create({
   permissionBtn: { backgroundColor: DS.emerald, paddingHorizontal: 30, paddingVertical: 16, borderRadius: 20 },
   permissionBtnText: { color: '#FFF', fontWeight: '900', fontSize: 16 },
 
-  headerSafe: { position: 'absolute', top: 0, width: '100%', zIndex: 10, alignItems: 'center', paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight! + 10 : 20 },
+  headerSafe: { position: 'absolute', top: 0, width: '100%', zIndex: 10, alignItems: 'center', paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 15 : 20 },
   headerPill: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 25, borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)', gap: 6 },
   headerPillText: { color: '#FFF', fontWeight: '800', fontSize: 13, letterSpacing: 0.5, textTransform: 'uppercase' },
 
@@ -749,7 +942,7 @@ const getStyles = (DS: any) => StyleSheet.create({
   limitBadge: { marginTop: 15, backgroundColor: 'rgba(245, 158, 11, 0.2)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, borderWidth: 1, borderColor: DS.warning },
   limitText: { color: DS.warning, fontSize: 12, fontWeight: '800' },
 
-  cancelBtnSafe: { position: 'absolute', top: Platform.OS === 'android' ? StatusBar.currentHeight! + 10 : 20, left: 20, zIndex: 20 },
+  cancelBtnSafe: { position: 'absolute', top: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 15 : 20, left: 20, zIndex: 20 },
   cancelBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' },
 
   viewportUi: { position: 'absolute', width: FRAME_SIZE, alignSelf: 'center', zIndex: 10, overflow: 'hidden', borderRadius: 80 },
@@ -770,9 +963,9 @@ const getStyles = (DS: any) => StyleSheet.create({
   bottomRight: { bottom: -2, right: -2, borderBottomWidth: 4, borderRightWidth: 4, borderBottomRightRadius: 30 },
 
   laser: { position: 'absolute', width: '100%', height: 4, backgroundColor: DS.emerald, shadowColor: DS.emerald, shadowOpacity: 1, shadowRadius: 20, elevation: 15 },
-  scanningGlassOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(10,15,13,0.8)', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
-  scanningIconWrap: { backgroundColor: DS.emerald, padding: 18, borderRadius: 35, marginBottom: 15 },
-  scanningText: { color: '#FFF', fontWeight: '800', fontSize: 16, textAlign: 'center', paddingHorizontal: 20 },
+  scanningGlassOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(10,15,13,0.4)', justifyContent: 'center', alignItems: 'center' },
+  scanningIconWrap: { backgroundColor: DS.emerald, padding: 18, borderRadius: 35, marginBottom: 15, shadowColor: DS.emerald, shadowOpacity: 0.5, shadowRadius: 15, elevation: 10 },
+  scanningText: { color: '#FFF', fontWeight: '800', fontSize: 16, textAlign: 'center', paddingHorizontal: 20, textShadowColor: 'rgba(0,0,0,0.8)', textShadowRadius: 10 },
 
   controlsBottomArea: { position: 'absolute', bottom: 0, width: '100%', paddingBottom: Platform.OS === 'ios' ? 60 : 40, zIndex: 20 },
   limitPill: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 25, borderWidth: 1, borderColor: 'rgba(245, 158, 11, 0.4)' },
@@ -783,73 +976,69 @@ const getStyles = (DS: any) => StyleSheet.create({
   captureBtnOuter: { width: 92, height: 92, borderRadius: 46, backgroundColor: 'rgba(255,255,255,0.12)', justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: 'rgba(255,255,255,0.4)' },
   captureBtnInner: { width: 76, height: 76, borderRadius: 38, backgroundColor: DS.emerald, justifyContent: 'center', alignItems: 'center', shadowColor: DS.emerald, shadowOpacity: 0.6, shadowRadius: 20, elevation: 12 },
 
-  resultSheet: { position: 'absolute', bottom: 0, left: 0, right: 0, height: H * 0.85, backgroundColor: DS.snow, borderTopLeftRadius: 44, borderTopRightRadius: 44, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 35, elevation: 30, zIndex: 100 },
+  resultSheet: { position: 'absolute', bottom: 0, left: 0, right: 0, height: H * 0.82, backgroundColor: DS.snow, borderTopLeftRadius: 40, borderTopRightRadius: 40, zIndex: 100, shadowColor: '#000', shadowOffset: { width: 0, height: -10 }, shadowOpacity: 0.1, shadowRadius: 20, elevation: 25 },
   sheetHandle: { width: 44, height: 6, backgroundColor: '#D1D5DB', borderRadius: 6, alignSelf: 'center', marginBottom: 25, marginTop: 15 },
   resultImageWrap: { alignSelf: 'center', marginBottom: 25, shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 20, elevation: 12, backgroundColor: '#FFF', padding: 6, borderRadius: 44 },
   resultImage: { width: 160, height: 160, borderRadius: 38, backgroundColor: '#E5E7EB' },
-  foodName: { fontFamily: DS.fontFamily, color: DS.onyx, fontSize: 28, fontWeight: '900', textAlign: 'center', marginBottom: 30, paddingHorizontal: 10, lineHeight: 34, letterSpacing: -0.8 },
+  headerRowWrap: { alignItems: 'center', marginBottom: 20 },
+  wowText: { fontFamily: DS.fontFamily, color: DS.emerald, fontSize: 12, fontWeight: '800', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 1.5, textAlign: 'center' },
+  foodName: { fontFamily: DS.fontFamily, color: DS.onyx, fontSize: 24, fontWeight: '900', textAlign: 'center', lineHeight: 30, letterSpacing: -0.5 },
 
-  topInfoBox: { flexDirection: 'row', backgroundColor: '#FFF', borderRadius: 30, padding: 24, marginBottom: 28, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 15, elevation: 3 },
-  infoCol: { flex: 1, justifyContent: 'center' },
-  vDivider: { width: 1, backgroundColor: '#F3F4F6', marginHorizontal: 20 },
-  infoLabel: { fontFamily: DS.fontFamily, color: DS.mist, fontSize: 14, fontWeight: '700', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5 },
-  calValue: { fontFamily: DS.fontFamily, color: DS.onyx, fontSize: 38, fontWeight: '900', letterSpacing: -1.5 },
-  calUnit: { fontSize: 16, color: DS.mist, fontWeight: '700', letterSpacing: 0 },
-  burnHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
-  burnValue: { fontFamily: DS.fontFamily, color: DS.danger, fontSize: 34, fontWeight: '900', letterSpacing: -1.5 },
-  burnUnit: { fontSize: 16, color: DS.mist, fontWeight: '700', letterSpacing: 0 },
-  burnSubtext: { fontFamily: DS.fontFamily, color: DS.mist, fontSize: 11, fontWeight: '600', marginTop: 4 },
+  summarySection: { flexDirection: 'row', alignItems: 'center', gap: 20, marginBottom: 25 },
+  chartWrapper: { alignItems: 'center', gap: 10 },
+  chartContainer: { width: 110, height: 110, justifyContent: 'center', alignItems: 'center' },
+  chartInner: { position: 'absolute', alignItems: 'center' },
+  chartCalNum: { fontFamily: DS.fontFamily, color: DS.onyx, fontSize: 24, fontWeight: '900' },
+  chartCalUnit: { fontFamily: DS.fontFamily, color: DS.mist, fontSize: 10, fontWeight: '700' },
+  chartLegend: { flexDirection: 'row', gap: 8 },
+  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  dot: { width: 6, height: 6, borderRadius: 3 },
+  legendText: { fontSize: 9, fontWeight: '700', color: DS.mist },
 
-  basicCalBox: { backgroundColor: '#FFF', padding: 24, borderRadius: 30, marginBottom: 28, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 15, elevation: 3, alignItems: 'center' },
-  basicCalLabel: { color: DS.mist, fontSize: 15, fontWeight: '800', textTransform: 'uppercase', marginBottom: 6, letterSpacing: 1 },
-  basicCalValue: { color: DS.onyx, fontSize: 48, fontWeight: '900', letterSpacing: -2.5 },
-  basicCalUnit: { fontSize: 18, color: DS.mist, fontWeight: '700', letterSpacing: 0 },
+  portionCard: { flex: 1, backgroundColor: '#FFF', padding: 18, borderRadius: 24, borderWidth: 1, borderColor: '#F3F4F6', alignItems: 'center', justifyContent: 'center' },
+  portionIconWrap: { width: 44, height: 44, borderRadius: 14, backgroundColor: DS.emeraldGlow, justifyContent: 'center', alignItems: 'center', marginBottom: 10 },
+  portionInfo: { alignItems: 'center' },
+  portionLabel: { fontFamily: DS.fontFamily, color: DS.mist, fontSize: 10, fontWeight: '700', textTransform: 'uppercase', marginBottom: 2 },
+  portionValue: { fontFamily: DS.fontFamily, color: DS.onyx, fontSize: 17, fontWeight: '900' },
 
-  macroHorizontalContainer: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 10, marginBottom: 35 },
-  macroCol: { flex: 1, paddingHorizontal: 6 },
-  macroHeader: { fontFamily: DS.fontFamily, color: DS.mist, fontSize: 12, fontWeight: '800', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 },
-  macroTrack: { height: 6, backgroundColor: '#EAEAEA', borderRadius: 3, marginBottom: 10, overflow: 'hidden' },
-  macroFill: { height: '100%', borderRadius: 3 },
-  macroGrams: { fontFamily: DS.fontFamily, color: DS.onyx, fontSize: 16, fontWeight: '900' },
+  detailedMacroCard: { backgroundColor: '#FFF', borderRadius: 32, padding: 24, marginBottom: 20, borderWidth: 1, borderColor: '#F3F4F6' },
+  macroHeaderRow: { marginBottom: 20 },
+  macroCardTitle: { fontFamily: DS.fontFamily, color: DS.onyx, fontSize: 16, fontWeight: '900', textAlign: 'center', textTransform: 'uppercase', letterSpacing: 0.5 },
+  macroTable: { width: '100%' },
+  tableHeader: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#F3F4F6', paddingBottom: 10, marginBottom: 15 },
+  tableRow: { flexDirection: 'row', paddingVertical: 10 },
+  tableCell: { flex: 1, fontFamily: DS.fontFamily, fontSize: 14, fontWeight: '700', textAlign: 'right' },
+  cellBold: { fontWeight: '900' },
 
-  insightBoxPremium: { backgroundColor: DS.emeraldGlow, padding: 24, borderRadius: 28, borderWidth: 1, borderColor: DS.emerald, marginBottom: 15 },
-  insightHeaderPremium: { flexDirection: 'row', alignItems: 'center', marginBottom: 14 },
-  insightTitlePremium: { fontFamily: DS.fontFamily, color: DS.emeraldDark, fontSize: 17, fontWeight: '900', letterSpacing: -0.3 },
-  insightTextPremium: { fontFamily: DS.fontFamily, color: DS.graphite, fontSize: 16, lineHeight: 26, fontWeight: '600' },
+  analysisBox: { backgroundColor: DS.primaryLight, padding: 24, borderRadius: 32, marginBottom: 15, alignItems: 'center' },
+  analysisTitle: { fontFamily: DS.fontFamily, color: DS.primaryDark, fontSize: 15, fontWeight: '900', textAlign: 'center', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 },
+  analysisText: { fontFamily: DS.fontFamily, color: DS.inkMid, fontSize: 15, lineHeight: 24, fontWeight: '600', textAlign: 'center' },
 
-  footerWrap: {
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: Platform.OS === 'ios' ? 10 : 20,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(0,0,0,0.05)',
-    backgroundColor: '#FFF',
-  },
-  footerRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  logBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    backgroundColor: DS.emerald,
-    paddingVertical: 18,
-    borderRadius: 22,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: DS.emerald,
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 5 },
-    elevation: 8,
-  },
-  backBtn: {
-    width: 60,
-    height: 60,
-    borderRadius: 22,
-    backgroundColor: 'rgba(0,0,0,0.04)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  logBtnText: { fontFamily: DS.fontFamily, color: '#FFF', fontSize: 18, fontWeight: '800', letterSpacing: 0.5 },
+  funFactBox: { backgroundColor: DS.warningGlow, padding: 24, borderRadius: 32, marginBottom: 15, borderWidth: 1, borderColor: DS.warning + '20', alignItems: 'center' },
+  funFactText: { fontFamily: DS.fontFamily, color: DS.inkMid, fontSize: 15, lineHeight: 24, fontWeight: '600', textAlign: 'center' },
+
+  footerWrap: { paddingHorizontal: 24, paddingTop: 16, paddingBottom: Platform.OS === 'ios' ? 34 : 24, borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.05)', backgroundColor: '#FFF' },
+  footerRow: { flexDirection: 'row', gap: 12 },
+  logBtn: { flex: 1, flexDirection: 'row', backgroundColor: DS.emerald, height: 60, borderRadius: 20, justifyContent: 'center', alignItems: 'center', shadowColor: DS.emerald, shadowOpacity: 0.3, shadowRadius: 10, elevation: 8 },
+  backBtn: { width: 60, height: 60, borderRadius: 20, backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#E5E7EB' },
+  logBtnText: { fontFamily: DS.fontFamily, color: '#FFF', fontSize: 18, fontWeight: '800' },
+
+  // Trust Modal
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 20 },
+  modalBlur: { borderRadius: 32, overflow: 'hidden', width: '100%' },
+  trustCard: { backgroundColor: '#FFF', padding: 24, borderRadius: 32 },
+  trustHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 15 },
+  trustTitle: { fontFamily: DS.fontFamily, color: DS.onyx, fontSize: 18, fontWeight: '900', flex: 1 },
+  trustDesc: { fontFamily: DS.fontFamily, color: DS.inkMid, fontSize: 14, lineHeight: 20, marginBottom: 25 },
+  formulaBox: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#F9FAFB', padding: 16, borderRadius: 24, marginBottom: 25 },
+  formulaItem: { alignItems: 'center', gap: 4 },
+  formulaIcon: { width: 36, height: 36, borderRadius: 12, backgroundColor: '#FFF', justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 5, elevation: 2 },
+  formulaLabel: { fontFamily: DS.fontFamily, fontSize: 11, fontWeight: '800', color: DS.onyx },
+  formulaSub: { fontFamily: DS.fontFamily, fontSize: 9, fontWeight: '600', color: DS.mist },
+  formulaOp: { fontSize: 18, fontWeight: '900', color: DS.mist },
+  reasoningBox: { flexDirection: 'row', backgroundColor: DS.warningGlow, padding: 16, borderRadius: 16, marginBottom: 20 },
+  reasoningText: { fontFamily: DS.fontFamily, color: DS.inkMid, fontSize: 13, lineHeight: 18, flex: 1 },
+  trustFooter: { fontFamily: DS.fontFamily, color: DS.mist, fontSize: 11, fontStyle: 'italic', textAlign: 'center', marginBottom: 25 },
+  trustCloseBtn: { backgroundColor: DS.emerald, paddingVertical: 16, borderRadius: 18, alignItems: 'center' },
+  trustCloseBtnText: { fontFamily: DS.fontFamily, color: '#FFF', fontSize: 16, fontWeight: '800' },
 });

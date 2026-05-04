@@ -142,7 +142,7 @@ export default function TabLayout() {
       <Tabs.Screen 
         name="cart" 
         options={{ 
-          title: 'კალათა', 
+          title: 'საყიდლები', 
           tabBarIcon: ({ color, focused }) => <ShoppingCart size={22} color={color} strokeWidth={focused ? 2.5 : 2} /> 
         }} 
       />

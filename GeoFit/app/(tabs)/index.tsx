@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import {
   StyleSheet, Text, View, SafeAreaView, ScrollView,
   TouchableOpacity, TextInput, Dimensions, Platform,
-  StatusBar, Modal, Animated, FlatList, RefreshControl, Pressable,
+  StatusBar, Modal, Animated, FlatList, RefreshControl, Pressable, Easing,
 } from 'react-native';
 
 let PagerView: any;
@@ -20,10 +20,12 @@ import Svg, {
 import {
   default as Reanimated,
   useSharedValue, useAnimatedStyle, withSpring,
-  withRepeat, withTiming, Easing, interpolate,
+  withRepeat, withTiming, interpolate,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useRouter, useFocusEffect } from 'expo-router';
+import { BrandAlert, BAlertState } from '../../components/ui/BrandAlert';
+
 import { useThemeStore } from '../../store/useThemeStore';
 import { useDiaryStore } from '../../store/useDiaryStore';
 import { getColors } from '../../config/theme';
@@ -39,6 +41,7 @@ import { Image } from 'expo-image';
 import { useAvatarStore } from '../../store/useAvatarStore';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
+import { getRecipeBadge } from '../../utils/recipeBadges';
 
 // Offline Fallback Data
 import LOCAL_RECIPES from '../../assets/data/recipes.json';
@@ -101,7 +104,7 @@ const TIPS = [
   "კალორიების მკვეთრი შეზღუდვა მეტაბოლიზმს ანელებს. ⚖️",
   "ცილას ყველაზე მაღალი თერმული ეფექტი აქვს! 🥩",
   "კენკროვანები ტვინის 'სუპერფუდია'. 🫐",
-  "გაყინული ბოსტნეული ისეთივე სასარგებლოა. ❄️",
+  "გაყინული ბოსტნეული სასარგებლოა. ❄️",
   "კურკუმა და დარიჩინი ანთების საწინააღმდეგოა. 🌶️",
   "იზრუნე სხეულზე სიყვარულით და არა აკრძალვებით! ❤️",
   "ანანასი ცილების მონელებაში გეხმარება. 🍍",
@@ -135,7 +138,7 @@ const TIPS = [
   "საზამთრო საუკეთესო საზაფხულო ჰიდრატაციაა! 🍉💧",
   "სატაცური იდეალურია შეშუპების ჩასაცხრობად. 🎋",
   "ორგანიზმი ნუშის კალორიების 20%-ს ვერ ითვისებს! 🌰",
-  "ლიმონიანი წყლის მერე ეგრევე ნუ გაიხეხავ! 🍋🪥",
+  "ლიმონიანი წყლის მერე ეგრევე კბილებს ნუ გაიხეხავ! 🍋🪥",
   "უშაქრო გაზიანი წყალიც იდეალურად ატენიანებს! 🫧💦",
   "პიტნის სურნელი შიმშილს დროებით აქრობს. 🌿",
   "ნუ ებრძვი ცდუნებას, უბრალოდ ნუ იყიდი ტკბილეულს! 🍪🚫",
@@ -159,7 +162,6 @@ const TIPS = [
   "კურკუმა და დარიჩინი ანთების საწინააღმდეგოა. 🌶️",
   "იზრუნე სხეულზე სიყვარულით და არა აკრძალვებით! ❤️",
   "ანანასი ცილების მონელებაში გეხმარება. 🍍",
-  "შავი ყავა ნამდვილი ბოსების ენერგიაა! ☕️🖤",
   "კვერცხის გულში ვიტამინების 90%-ია. 🍳",
   "დილით ვაშლი ყავაზე უკეთ გაფხიზლებს. 🍏",
   "პატარა თეფში ტვინს ატყუებს, რომ ბევრი ჭამე. 🍽️🧠",
@@ -178,21 +180,45 @@ const getImageUrl = (url: string, baseUrl: string) => {
 // ─────────────────────────────────────────────────────────────────────────────
 // 🎯 PREMIUM HEADER
 // ─────────────────────────────────────────────────────────────────────────────
-const SimpleHeader = React.memo(({ userName, T }: { userName: string; T: any }) => (
-  <View style={headerStyles.container}>
-    <Text style={[headerStyles.name, { color: T.dark }]}>გამარჯობა, {userName || 'ბექა'}! 👋</Text>
-    <Text style={[headerStyles.sub, { color: T.mid }]}>რას მოვამზადებთ დღეს?</Text>
-  </View>
-));
+const SimpleHeader = React.memo(({ userName, T }: { userName: string; T: any }) => {
+  const fade = useRef(new Animated.Value(0)).current;
+  const slide = useRef(new Animated.Value(10)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fade, { toValue: 1, duration: 800, useNativeDriver: Platform.OS !== 'web' }),
+      Animated.timing(slide, { toValue: 0, duration: 800, easing: Easing.out(Easing.back(1)), useNativeDriver: Platform.OS !== 'web' }),
+    ]).start();
+  }, []);
+
+  return (
+    <Animated.View style={[headerStyles.container, { opacity: fade, transform: [{ translateY: slide }] }]}>
+      <View style={headerStyles.content}>
+        <View style={headerStyles.textGroup}>
+          <Text style={[headerStyles.name, { color: T.dark }]}>გამარჯობა, {userName || 'ბექა'}! 👋</Text>
+          <Text style={[headerStyles.sub, { color: T.mid }]}>რას მოვამზადებთ დღეს?</Text>
+        </View>
+      </View>
+    </Animated.View>
+  );
+});
 
 const headerStyles = StyleSheet.create({
-  container: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 12 },
-  name: { fontSize: 28, fontWeight: '900', letterSpacing: -0.7 },
-  sub: { fontSize: 15, fontWeight: '600', opacity: 0.55, marginTop: 4 },
+  container: {
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    paddingBottom: 16
+  },
+  content: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  textGroup: { flex: 1 },
+  name: { fontSize: 28, fontWeight: '900', letterSpacing: -0.8 },
+  sub: { fontSize: 15, fontWeight: '600', opacity: 0.5, marginTop: 2 },
+  profileWrap: { width: 44, height: 44, borderRadius: 22, borderWidth: 1, overflow: 'hidden', padding: 2 },
+  avatar: { width: '100%', height: '100%', borderRadius: 20 },
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 💎 HERO STATS ROW — კომპაქტური, ბალანსირებული side-by-side cards
+// 💎 HERO STATS ROW — Unified, Premium "Daily Pulse"
 // ─────────────────────────────────────────────────────────────────────────────
 const HeroStatsRow = React.memo(({ consumed, target, tip, C, T, onTipPress, onCaloriePress }: {
   consumed: number; target: number; tip: string; C: any; T: any;
@@ -209,177 +235,94 @@ const HeroStatsRow = React.memo(({ consumed, target, tip, C, T, onTipPress, onCa
     return C.primary;
   }, [progress, isOver, C.primary]);
 
-  // ანიმაცია რჩევის შეცვლისას
-  const tipFade = useRef(new Animated.Value(1)).current;
-  const tipRef = useRef(tip);
+  const fade = useRef(new Animated.Value(0)).current;
+  const scale = useRef(new Animated.Value(0.95)).current;
+
   useEffect(() => {
-    if (tipRef.current !== tip) {
-      tipFade.setValue(0);
-      Animated.timing(tipFade, { toValue: 1, duration: 280, useNativeDriver: Platform.OS !== 'web' }).start();
-      tipRef.current = tip;
-    }
-  }, [tip]);
+    Animated.delay(200).start(() => {
+      Animated.parallel([
+        Animated.timing(fade, { toValue: 1, duration: 600, useNativeDriver: Platform.OS !== 'web' }),
+        Animated.spring(scale, { toValue: 1, friction: 8, tension: 40, useNativeDriver: Platform.OS !== 'web' }),
+      ]).start();
+    });
+  }, []);
 
   return (
-    <View style={heroStyles.row}>
-      {/* ── CALORIE CARD ── */}
-      <Pressable
-        style={({ pressed }) => [
-          heroStyles.card,
-          { backgroundColor: T.card, opacity: pressed ? 0.92 : 1 },
-        ]}
-        onPress={onCaloriePress}
-      >
-        <View style={heroStyles.cardHeader}>
-          <View style={[heroStyles.iconCircle, { backgroundColor: progressColor + '18' }]}>
-            <Flame size={14} color={progressColor} />
-          </View>
-          <Text style={[heroStyles.cardLabel, { color: T.mid }]}>დარჩენილია</Text>
+    <Animated.View style={[heroStyles.row, { opacity: fade, transform: [{ scale }] }]}>
+      <BlurView intensity={Platform.OS === 'ios' ? 40 : 0} style={[heroStyles.mainCard, { backgroundColor: T.glass, borderColor: T.glassBorder }]}>
+        <View style={heroStyles.cardContent}>
+          <Pressable style={heroStyles.leftCol} onPress={onCaloriePress}>
+            <View style={heroStyles.labelRow}>
+              <View style={[heroStyles.dot, { backgroundColor: progressColor }]} />
+              <Text style={[heroStyles.cardLabel, { color: T.mid }]}>დარჩენილია</Text>
+            </View>
+            <View style={heroStyles.valueRow}>
+              <Text style={[heroStyles.bigValue, { color: T.dark }]}>{isOver ? '0' : remaining.toLocaleString()}</Text>
+              <Text style={[heroStyles.valueUnit, { color: T.mid }]}>კკალ</Text>
+            </View>
+            <View style={heroStyles.miniProgressContainer}>
+              <View style={[heroStyles.miniProgressTrack, { backgroundColor: T.border }]}>
+                <View style={[heroStyles.miniProgressFill, { width: `${progress * 100}%`, backgroundColor: progressColor }]} />
+              </View>
+              <Text style={[heroStyles.percentText, { color: T.mid }]}>{percentage}%</Text>
+            </View>
+          </Pressable>
+
+          <View style={[heroStyles.divider, { backgroundColor: T.border }]} />
+
+          <Pressable style={heroStyles.rightCol} onPress={onTipPress}>
+            <View style={heroStyles.labelRow}>
+              <Lightbulb size={12} color="#FFB800" fill="#FFB800" style={{ marginRight: 4 }} />
+              <Text style={[heroStyles.cardLabel, { color: T.mid }]}>დღის რჩევა</Text>
+            </View>
+            <Text style={[heroStyles.tipText, { color: T.dark }]} numberOfLines={3}>{tip}</Text>
+          </Pressable>
         </View>
-
-        <View style={heroStyles.valueRow}>
-          <Text style={[heroStyles.bigValue, { color: T.dark }]}>
-            {isOver ? '0' : remaining.toLocaleString()}
-          </Text>
-          <Text style={[heroStyles.valueUnit, { color: T.mid }]}>კკალ</Text>
-        </View>
-
-        <Text style={[heroStyles.subInfo, { color: T.light }]}>
-          {consumed} / {target}
-        </Text>
-
-        <View style={heroStyles.progressBlock}>
-          <View style={[heroStyles.progressTrack, { backgroundColor: T.border }]}>
-            <View
-              style={[
-                heroStyles.progressFill,
-                { width: `${Math.min(progress * 100, 100)}%`, backgroundColor: progressColor },
-              ]}
-            />
-          </View>
-          <Text style={[heroStyles.percentInline, { color: progressColor }]}>{percentage}%</Text>
-        </View>
-      </Pressable>
-
-      {/* ── TIP CARD ── */}
-      <Pressable
-        style={({ pressed }) => [
-          heroStyles.card,
-          { backgroundColor: T.card, opacity: pressed ? 0.92 : 1 },
-        ]}
-        onPress={onTipPress}
-      >
-        <View style={heroStyles.cardHeader}>
-          <View style={[heroStyles.iconCircle, { backgroundColor: '#FFB80018' }]}>
-            <Lightbulb size={14} color="#FFB800" />
-          </View>
-          <Text style={[heroStyles.cardLabel, { color: T.mid }]}>დღის რჩევა</Text>
-        </View>
-
-        <Animated.View style={[heroStyles.tipBody, { opacity: tipFade }]}>
-          <Text style={[heroStyles.tipText, { color: T.dark }]}>
-            {tip}
-          </Text>
-        </Animated.View>
-      </Pressable>
-    </View>
+      </BlurView>
+    </Animated.View>
   );
 });
 
 const heroStyles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
-    gap: 12,
-    marginVertical: 12,
-    alignItems: 'stretch',
-  },
-  card: {
-    flex: 1,
-    padding: 14,
-    borderRadius: 20,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 3 },
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.03)',
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 10,
-  },
-  iconCircle: {
-    width: 26,
-    height: 26,
-    borderRadius: 9,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  cardLabel: {
-    fontSize: 10.5,
-    fontWeight: '800',
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
-    flex: 1,
-  },
-  valueRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 4,
-    marginBottom: 2,
-  },
-  bigValue: {
-    fontSize: 28,
-    fontWeight: '900',
-    letterSpacing: -1,
-    lineHeight: 32,
-  },
-  valueUnit: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  subInfo: {
-    fontSize: 11,
-    fontWeight: '600',
-    marginBottom: 10,
-  },
-  progressBlock: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginTop: 'auto',
-  },
-  progressTrack: {
-    flex: 1,
-    height: 5,
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 3,
-  },
-  percentInline: {
-    fontSize: 11,
-    fontWeight: '900',
-    letterSpacing: 0.2,
-    minWidth: 32,
-    textAlign: 'right',
-  },
-  tipBody: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  tipText: {
-    fontSize: 12,
-    fontWeight: '600',
-    lineHeight: 17,
-  },
+  row: { paddingHorizontal: 20, marginVertical: 8 },
+  mainCard: { borderRadius: 24, borderWidth: 1, overflow: 'hidden', padding: 18 },
+  cardContent: { flexDirection: 'row', alignItems: 'center' },
+  leftCol: { flex: 1.1, paddingRight: 12 },
+  rightCol: { flex: 1, paddingLeft: 12 },
+  divider: { width: 1, height: '70%', opacity: 0.5 },
+  labelRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+  dot: { width: 6, height: 6, borderRadius: 3, marginRight: 6 },
+  cardLabel: { fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 },
+  valueRow: { flexDirection: 'row', alignItems: 'baseline', gap: 4, marginBottom: 8 },
+  bigValue: { fontSize: 26, fontWeight: '900', letterSpacing: -1 },
+  valueUnit: { fontSize: 12, fontWeight: '700' },
+  miniProgressContainer: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  miniProgressTrack: { flex: 1, height: 4, borderRadius: 2, overflow: 'hidden' },
+  miniProgressFill: { height: '100%', borderRadius: 2 },
+  percentText: { fontSize: 10, fontWeight: '800', minWidth: 28 },
+  tipText: { fontSize: 12, fontWeight: '600', lineHeight: 18, opacity: 0.85 },
 });
+
+// ─── Entry Animations ──────────────────────────────────────────────────────────
+const AppearAnimated = ({ children, index = 0, delay = 0, style }: { children: React.ReactNode, index?: number, delay?: number, style?: any }) => {
+  const fade = useRef(new Animated.Value(0)).current;
+  const slide = useRef(new Animated.Value(12)).current;
+
+  useEffect(() => {
+    Animated.delay(delay + (index * 60)).start(() => {
+      Animated.parallel([
+        Animated.timing(fade, { toValue: 1, duration: 600, useNativeDriver: Platform.OS !== 'web' }),
+        Animated.spring(slide, { toValue: 0, friction: 9, tension: 35, useNativeDriver: Platform.OS !== 'web' }),
+      ]).start();
+    });
+  }, []);
+
+  return (
+    <Animated.View style={[{ opacity: fade, transform: [{ translateY: slide }] }, style]}>
+      {children}
+    </Animated.View>
+  );
+};
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 const SkeletonPulse = ({ style, T }: { style?: any; T: any }) => {
@@ -429,22 +372,9 @@ export default function HomeScreen() {
   const { computeMood } = useAvatarStore();
 
   useEffect(() => {
-    if (isPremium) {
-      setPremium(false);
-    }
-    // Force reset isPro in AsyncStorage for MVP lock testing
-    AsyncStorage.getItem('userProfile').then(saved => {
-      if (saved) {
-        try {
-          const p = JSON.parse(saved);
-          if (p.isPro) {
-            p.isPro = false;
-            AsyncStorage.setItem('userProfile', JSON.stringify(p));
-          }
-        } catch {}
-      }
-    });
-  }, [isPremium, setPremium]);
+    // FORCE RESET FOR TESTING - This ensures you see the paywall
+    setPremium(false);
+  }, []);
 
   const [recipes, setRecipes] = useState<any[]>([]);
   const [activeCategory, setActiveCategory] = useState('აღმოაჩინე');
@@ -463,7 +393,7 @@ export default function HomeScreen() {
   const [highProteinRecipes, setHighProteinRecipes] = useState<any[]>([]);
   const [viewAllSection, setViewAllSection] = useState<{ title: string; data: any[] } | null>(null);
   const [isOffline, setIsOffline] = useState(false);
-  const [brandAlert, setBrandAlert] = useState({ visible: false, title: '', message: '', type: 'error' });
+  const [brandAlert, setBrandAlert] = useState<BAlertState>({ visible: false, title: '', message: '', type: 'error' });
   const [tabHeights, setTabHeights] = useState<{ [k: string]: number }>({});
 
   const heartScales = useRef<{ [id: string]: Animated.Value }>({}).current;
@@ -474,10 +404,10 @@ export default function HomeScreen() {
   const mainScrollRef = useRef<any>(null);
   const headerOpacity = scrollY.interpolate({ inputRange: [0, 80, 150], outputRange: [1, 0.5, 0], extrapolate: 'clamp' });
 
-  useEffect(() => { 
+  useEffect(() => {
     const todayStr = new Date().toISOString().split('T')[0];
     const safeConsumed = Math.round(intake[todayStr]?.calories || 0);
-    computeMood(safeConsumed, targetCalories || 2000, 0, 8); 
+    computeMood(safeConsumed, targetCalories || 2000, 0, 8);
   }, [intake, targetCalories]);
 
   useFocusEffect(useCallback(() => {
@@ -515,8 +445,14 @@ export default function HomeScreen() {
         const c = await AsyncStorage.getItem('cachedRecipes');
         if (c) list = JSON.parse(c).map((r: any) => ({ ...r, image_url: getImageUrl(r.image_url, SERVER_URL) }));
       } catch { }
+      setIsOffline(false); // Reset before attempting to fetch
       try {
-        const res = await fetch(`${SERVER_URL}/recipes/`);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout for Vercel cold starts
+
+        const res = await fetch(`${SERVER_URL}/recipes/`, { signal: controller.signal });
+        clearTimeout(timeoutId);
+
         if (res.ok) {
           const data = await res.json();
           const fresh = Array.isArray(data) ? data : (data?.recipes || []);
@@ -536,9 +472,9 @@ export default function HomeScreen() {
       if (list.length === 0) {
         console.log("Using bundled local recipes");
         setIsOffline(true);
-        list = LOCAL_RECIPES.map((r: any) => ({ 
-          ...r, 
-          image_url: getImageUrl(r.image_url, SERVER_URL) 
+        list = LOCAL_RECIPES.map((r: any) => ({
+          ...r,
+          image_url: getImageUrl(r.image_url, SERVER_URL)
         }));
       }
 
@@ -549,10 +485,10 @@ export default function HomeScreen() {
 
       try {
         const s = await AsyncStorage.getItem('trendingData');
-        if (s) { 
-          const td = JSON.parse(s); 
+        if (s) {
+          const td = JSON.parse(s);
           if (Date.now() - td.timestamp < TRENDING_TTL) {
-            t = list.filter((r: any) => td.ids.includes(r.id) && String(r.category || '').trim() !== 'სოუსები'); 
+            t = list.filter((r: any) => td.ids.includes(r.id) && String(r.category || '').trim() !== 'სოუსები');
           }
         }
       } catch { }
@@ -662,11 +598,21 @@ export default function HomeScreen() {
   const isRecipePro = useCallback((recipe: any) => {
     if (!recipe) return false;
     const cat = String(recipe.category || '').trim();
+
+    // 1. Sauces & Snacks are ALWAYS PRO
     if (cat === 'სოუსები' || cat === 'წახემსება') return true;
 
-    // Only block recipes that are explicitly in the High Protein section
-    return highProteinRecipes.some(r => String(r?.id) === String(recipe.id));
-  }, [highProteinRecipes]);
+    // 2. Protein Bombs are PRO ONLY in "Discover" section
+    if (activeCategory === 'აღმოაჩინე') {
+      const isProteinBomb = highProteinRecipes.some(r => String(r?.id) === String(recipe.id));
+      if (isProteinBomb) return true;
+
+      const isTrending = trendingRecipes.some(r => String(r?.id) === String(recipe.id));
+      if (isTrending) return true;
+    }
+
+    return false;
+  }, [highProteinRecipes, trendingRecipes, activeCategory]);
 
   const handleRecipePress = useCallback((recipe: any) => {
     if (!recipe) return;
@@ -685,62 +631,116 @@ export default function HomeScreen() {
     const isFav = favorites.includes(rId);
     const scale = getHeartScale(rId);
     return (
-      <TouchableOpacity
-        key={idx}
-        style={styles.gridCard}
-        activeOpacity={0.85}
-        onPress={() => handleRecipePress(recipe)}
-      >
-        <Image
-          source={{ uri: recipe.image_url || 'https://via.placeholder.com/150' }}
-          style={styles.gridImg}
-          contentFit="cover"
-          transition={250}
-          placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
-        />
-        {isRecipePro(recipe) && !isPremium && (
-          <View style={{ 
-            position: 'absolute', 
-            top: 10, 
-            left: 10, 
-            backgroundColor: 'rgba(255,255,255,0.9)', 
-            paddingHorizontal: 8, 
-            paddingVertical: 5, 
-            borderRadius: 10, 
-            zIndex: 10,
+      <AppearAnimated index={idx} key={idx} style={{ width: '48%', marginBottom: 16 }}>
+        <TouchableOpacity
+          style={[styles.gridCard, { width: '100%', height: 210, marginBottom: 0, flexDirection: 'column' }]}
+          activeOpacity={0.85}
+          onPress={() => handleRecipePress(recipe)}
+        >
+          <Image
+            source={{ uri: recipe.image_url || 'https://via.placeholder.com/150' }}
+            style={[styles.gridImg, { height: 145 }]}
+            contentFit="cover"
+            transition={250}
+            placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
+          />
+
+          <LinearGradient
+            colors={['transparent', 'rgba(0,0,0,0.8)']}
+            style={{ position: 'absolute', top: 95, left: 0, right: 0, height: 50 }}
+          />
+
+          {(() => {
+            const isPro = isRecipePro(recipe) && !isPremium;
+            const badge = getRecipeBadge(recipe);
+            const BadgeIcon = badge?.icon;
+
+            return (
+              <>
+                {/* 1. Nutrition Badge (Top Left) */}
+                {badge && (
+                  <View style={{
+                    position: 'absolute', top: 10, left: 10, zIndex: 12,
+                    backgroundColor: 'rgba(255,255,255,0.95)',
+                    paddingHorizontal: 8, paddingVertical: 5, borderRadius: 10,
+                    flexDirection: 'row', alignItems: 'center',
+                    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.1, shadowRadius: 3, elevation: 2,
+                  }}>
+                    <BadgeIcon size={12} color={badge.color} style={{ marginRight: 4 }} />
+                    <Text style={{ fontSize: 10, fontWeight: '900', color: badge.color, letterSpacing: 0.5 }}>{badge.label}</Text>
+                  </View>
+                )}
+
+                {/* 2. Professional PRO Lock Overlay */}
+                {isPro && (
+                  <View style={{
+                    position: 'absolute', top: 0, left: 0, right: 0, height: 145,
+                    zIndex: 11, borderRadius: T.r_lg, overflow: 'hidden'
+                  }}>
+                    <BlurView intensity={25} tint="dark" style={StyleSheet.absoluteFill}>
+                      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.15)', justifyContent: 'center', alignItems: 'center' }}>
+                        <View style={{
+                          backgroundColor: 'rgba(255,255,255,0.9)',
+                          padding: 10, borderRadius: 25,
+                          shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
+                          shadowOpacity: 0.2, shadowRadius: 8, elevation: 5
+                        }}>
+                          <Lock size={20} color={T.dark} />
+                        </View>
+                        <Text style={{
+                          color: '#FFF', fontSize: 12, fontWeight: '900',
+                          marginTop: 8, textShadowColor: 'rgba(0,0,0,0.5)',
+                          textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3
+                        }}>PRO</Text>
+                      </View>
+                    </BlurView>
+                  </View>
+                )}
+
+                {/* 3. Heart Button (Top Right) */}
+                <TouchableOpacity
+                  style={[styles.heartBtnGrid, { zIndex: 13, backgroundColor: isPro ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.92)' }]}
+                  onPress={() => toggleFavorite(rId)}
+                  activeOpacity={0.8}
+                >
+                  <Animated.View style={{ transform: [{ scale }] }}>
+                    <Heart size={18} color={isFav ? T.danger : (isPro ? 'rgba(0,0,0,0.4)' : '#FFF')} fill={isFav ? T.danger : 'rgba(0,0,0,0.3)'} />
+                  </Animated.View>
+                </TouchableOpacity>
+              </>
+            );
+          })()}
+
+          {/* GLASS META OVER IMAGE */}
+          <View style={{
+            position: 'absolute',
+            top: 114,
+            left: 8,
+            right: 8,
             flexDirection: 'row',
-            alignItems: 'center',
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.15,
-            shadowRadius: 4,
-            elevation: 3,
-            borderWidth: 1,
-            borderColor: 'rgba(255,215,0,0.3)'
+            justifyContent: 'space-between',
+            zIndex: 5
           }}>
-            <Crown size={12} color="#D4AF37" fill="#D4AF37" style={{ marginRight: 4 }} />
-            <Text style={{ fontSize: 10, fontWeight: '900', color: '#B8860B', letterSpacing: 0.5 }}>PRO</Text>
+            <BlurView intensity={Platform.OS === 'ios' ? 40 : 100} tint="dark" style={{
+              flexDirection: 'row', alignItems: 'center', paddingHorizontal: 6, paddingVertical: 4, borderRadius: 8, overflow: 'hidden'
+            }}>
+              <Clock size={10} color="#FFF" />
+              <Text style={{ fontFamily: T.fontFamily, fontSize: 10, color: '#FFF', fontWeight: '800', marginLeft: 4 }}>{recipe.prep_time || 0}წთ</Text>
+            </BlurView>
+            <BlurView intensity={Platform.OS === 'ios' ? 40 : 100} tint="dark" style={{
+              flexDirection: 'row', alignItems: 'center', paddingHorizontal: 6, paddingVertical: 4, borderRadius: 8, overflow: 'hidden'
+            }}>
+              <Flame size={10} color="#FF8A8A" />
+              <Text style={{ fontFamily: T.fontFamily, fontSize: 10, color: '#FF8A8A', fontWeight: '800', marginLeft: 4 }}>{recipe.total_calories || 0}</Text>
+            </BlurView>
           </View>
-        )}
-        <TouchableOpacity style={styles.heartBtnGrid} onPress={() => toggleFavorite(rId)} activeOpacity={0.8}>
-          <Animated.View style={{ transform: [{ scale }] }}>
-            <Heart size={18} color={isFav ? T.danger : '#FFF'} fill={isFav ? T.danger : 'rgba(0,0,0,0.3)'} />
-          </Animated.View>
+
+          <View style={[styles.gridInfo, { flex: 1, padding: 10, justifyContent: 'center', alignItems: 'center' }]}>
+            <Text style={[styles.gridName, { marginBottom: 0, textAlign: 'center', fontSize: 13, lineHeight: 18 }]} numberOfLines={2}>{recipe.name}</Text>
+          </View>
         </TouchableOpacity>
-        <View style={styles.gridInfo}>
-          <Text style={styles.gridName} numberOfLines={2}>{recipe.name}</Text>
-          <View style={styles.gridMetaRow}>
-            <View style={styles.metaBadge}>
-              <Clock size={10} color={T.mid} />
-              <Text style={styles.gridMetaText}> {recipe.prep_time || 0}წთ</Text>
-            </View>
-            <View style={[styles.metaBadge, { backgroundColor: 'rgba(255,71,87,0.1)' }]}>
-              <Flame size={10} color={T.danger} />
-              <Text style={[styles.gridMetaText, { color: T.danger }]}> {recipe.total_calories || 0}</Text>
-            </View>
-          </View>
-        </View>
-      </TouchableOpacity>
+      </AppearAnimated>
     );
   }, [favorites]);
 
@@ -771,9 +771,9 @@ export default function HomeScreen() {
       );
     }
 
-    // ზუსტი height გამოთვლა: 2 სვეტი, card height ~ 210 (image 130 + info ~60 + margin)
+    // ზუსტი height გამოთვლა: 2 სვეტი, card height ~ 210 + 16 margin
     const rowCount = Math.ceil(data.length / 2);
-    const estimatedHeight = rowCount * 210 + 40;
+    const estimatedHeight = rowCount * 226 + 40;
 
     return (
       <View
@@ -822,37 +822,48 @@ export default function HomeScreen() {
               const isFav = favorites.includes(rId);
               const scale = getHeartScale(rId);
               return (
-                <TouchableOpacity
-                  key={idx}
-                  style={styles.trendingCard}
-                  activeOpacity={0.88}
-                  onPress={() => handleRecipePress(recipe)}
-                >
-                  <Image
-                    source={{ uri: recipe.image_url }}
-                    style={styles.trendingImg}
-                    contentFit="cover"
-                    transition={250}
-                    placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
-                  />
-                  {isRecipePro(recipe) && !isPremium && (
-                    <View style={{ position: 'absolute', top: 8, left: 8, backgroundColor: 'rgba(0,0,0,0.6)', padding: 6, borderRadius: 12, zIndex: 10 }}>
-                      <Lock size={14} color="#F59E0B" />
+                <AppearAnimated index={idx} delay={300} key={idx}>
+                  <TouchableOpacity
+                    style={styles.trendingCard}
+                    activeOpacity={0.88}
+                    onPress={() => handleRecipePress(recipe)}
+                  >
+                    <Image
+                      source={{ uri: recipe.image_url }}
+                      style={styles.trendingImg}
+                      contentFit="cover"
+                      transition={250}
+                      placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
+                    />
+                    {isRecipePro(recipe) && !isPremium && (
+                      <View style={{
+                        position: 'absolute', top: 0, left: 0, right: 0, height: 160,
+                        zIndex: 11, borderRadius: T.r_xl, overflow: 'hidden'
+                      }}>
+                        <BlurView intensity={25} tint="dark" style={StyleSheet.absoluteFill}>
+                          <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.15)', justifyContent: 'center', alignItems: 'center' }}>
+                            <View style={{ backgroundColor: 'rgba(255,255,255,0.9)', padding: 8, borderRadius: 20 }}>
+                              <Lock size={16} color={T.dark} />
+                            </View>
+                            <Text style={{ color: '#FFF', fontSize: 10, fontWeight: '900', marginTop: 4 }}>PRO</Text>
+                          </View>
+                        </BlurView>
+                      </View>
+                    )}
+                    <TouchableOpacity style={styles.heartBtn} onPress={() => toggleFavorite(rId)} activeOpacity={0.8}>
+                      <Animated.View style={{ transform: [{ scale }] }}>
+                        <Heart size={20} color={isFav ? T.danger : '#FFF'} fill={isFav ? T.danger : 'rgba(0,0,0,0.3)'} />
+                      </Animated.View>
+                    </TouchableOpacity>
+                    <View style={styles.trendingInfo}>
+                      <Text style={styles.trendingName} numberOfLines={2}>{recipe.name}</Text>
+                      <View style={styles.metaRow}>
+                        <Text style={styles.metaTextSmall}><Clock size={12} color={T.mid} /> {recipe.prep_time || 0} წთ</Text>
+                        <Text style={styles.metaTextSmall}><Flame size={12} color={T.danger} /> {recipe.total_calories || 0} კკალ</Text>
+                      </View>
                     </View>
-                  )}
-                  <TouchableOpacity style={styles.heartBtn} onPress={() => toggleFavorite(rId)} activeOpacity={0.8}>
-                    <Animated.View style={{ transform: [{ scale }] }}>
-                      <Heart size={20} color={isFav ? T.danger : '#FFF'} fill={isFav ? T.danger : 'rgba(0,0,0,0.3)'} />
-                    </Animated.View>
                   </TouchableOpacity>
-                  <View style={styles.trendingInfo}>
-                    <Text style={styles.trendingName} numberOfLines={2}>{recipe.name}</Text>
-                    <View style={styles.metaRow}>
-                      <Text style={styles.metaTextSmall}><Clock size={12} color={T.mid} /> {recipe.prep_time || 0} წთ</Text>
-                      <Text style={styles.metaTextSmall}><Flame size={12} color={T.danger} /> {recipe.total_calories || 0} კკალ</Text>
-                    </View>
-                  </View>
-                </TouchableOpacity>
+                </AppearAnimated>
               );
             })}
           </ScrollView>
@@ -861,21 +872,31 @@ export default function HomeScreen() {
         {highProteinRecipes.length > 0 && (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} decelerationRate="fast" contentContainerStyle={styles.carouselContainer}>
             {highProteinRecipes.map((r, idx) => !r ? null : (
-              <TouchableOpacity
-                key={idx}
-                style={styles.proteinCard}
-                activeOpacity={0.88}
-                onPress={() => handleRecipePress(r)}
-              >
-                <Image source={{ uri: r.image_url }} style={styles.proteinImg} contentFit="cover" transition={250} placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }} />
-                {isRecipePro(r) && !isPremium && (
-                  <View style={{ position: 'absolute', top: 8, left: 8, backgroundColor: 'rgba(0,0,0,0.6)', padding: 6, borderRadius: 12, zIndex: 10 }}>
-                    <Lock size={14} color="#F59E0B" />
-                  </View>
-                )}
-                <View style={styles.proteinBadge}><Text style={styles.proteinBadgeText}>{r.protein || Math.round((r.total_calories || 0) * 0.08)}გ ცილა</Text></View>
-                <View style={styles.proteinInfo}><Text style={styles.proteinName} numberOfLines={1}>{r.name}</Text></View>
-              </TouchableOpacity>
+              <AppearAnimated index={idx} delay={400} key={idx}>
+                <TouchableOpacity
+                  style={styles.proteinCard}
+                  activeOpacity={0.88}
+                  onPress={() => handleRecipePress(r)}
+                >
+                  <Image source={{ uri: r.image_url }} style={styles.proteinImg} contentFit="cover" transition={250} placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }} />
+                  {isRecipePro(r) && !isPremium && (
+                    <View style={{
+                      position: 'absolute', top: 0, left: 0, right: 0, height: 110,
+                      zIndex: 11, borderRadius: T.r_lg, overflow: 'hidden'
+                    }}>
+                      <BlurView intensity={25} tint="dark" style={StyleSheet.absoluteFill}>
+                        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.15)', justifyContent: 'center', alignItems: 'center' }}>
+                          <View style={{ backgroundColor: 'rgba(255,255,255,0.9)', padding: 6, borderRadius: 15 }}>
+                            <Lock size={14} color={T.dark} />
+                          </View>
+                        </View>
+                      </BlurView>
+                    </View>
+                  )}
+                  <View style={styles.proteinBadge}><Text style={styles.proteinBadgeText}>{r.protein || Math.round((r.total_calories || 0) * 0.08)}გ ცილა</Text></View>
+                  <View style={styles.proteinInfo}><Text style={styles.proteinName} numberOfLines={1}>{r.name}</Text></View>
+                </TouchableOpacity>
+              </AppearAnimated>
             ))}
           </ScrollView>
         )}
@@ -883,23 +904,33 @@ export default function HomeScreen() {
         {quickRecipes.length > 0 && (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} decelerationRate="fast" contentContainerStyle={styles.carouselContainer}>
             {quickRecipes.map((r, idx) => !r ? null : (
-              <TouchableOpacity
-                key={idx}
-                style={styles.quickCard}
-                activeOpacity={0.88}
-                onPress={() => handleRecipePress(r)}
-              >
-                <Image source={{ uri: r.image_url }} style={styles.quickImg} contentFit="cover" transition={250} placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }} />
-                {isRecipePro(r) && !isPremium && (
-                  <View style={{ position: 'absolute', top: 8, left: 8, backgroundColor: 'rgba(0,0,0,0.6)', padding: 6, borderRadius: 12, zIndex: 10 }}>
-                    <Lock size={14} color="#F59E0B" />
+              <AppearAnimated index={idx} delay={500} key={idx}>
+                <TouchableOpacity
+                  style={styles.quickCard}
+                  activeOpacity={0.88}
+                  onPress={() => handleRecipePress(r)}
+                >
+                  <Image source={{ uri: r.image_url }} style={styles.quickImg} contentFit="cover" transition={250} placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }} />
+                  {isRecipePro(r) && !isPremium && (
+                    <View style={{
+                      position: 'absolute', top: 0, left: 0, right: 0, height: 100,
+                      zIndex: 11, borderRadius: T.r_lg, overflow: 'hidden'
+                    }}>
+                      <BlurView intensity={25} tint="dark" style={StyleSheet.absoluteFill}>
+                        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.15)', justifyContent: 'center', alignItems: 'center' }}>
+                          <View style={{ backgroundColor: 'rgba(255,255,255,0.9)', padding: 6, borderRadius: 15 }}>
+                            <Lock size={14} color={T.dark} />
+                          </View>
+                        </View>
+                      </BlurView>
+                    </View>
+                  )}
+                  <View style={styles.quickInfo}>
+                    <Text style={styles.quickName} numberOfLines={2}>{r.name}</Text>
+                    <Text style={styles.quickTime}>{r.prep_time || 0} წუთი</Text>
                   </View>
-                )}
-                <View style={styles.quickInfo}>
-                  <Text style={styles.quickName} numberOfLines={2}>{r.name}</Text>
-                  <Text style={styles.quickTime}>{r.prep_time || 0} წუთი</Text>
-                </View>
-              </TouchableOpacity>
+                </TouchableOpacity>
+              </AppearAnimated>
             ))}
           </ScrollView>
         )}
@@ -911,11 +942,14 @@ export default function HomeScreen() {
                 key={idx}
                 style={styles.verticalCard}
                 activeOpacity={0.88}
-                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push(`/details/${r.id}`); }}
+                onPress={() => handleRecipePress(r)}
               >
                 <Image source={{ uri: r.image_url }} style={styles.verticalImg} contentFit="cover" transition={250} placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }} />
                 <View style={styles.verticalInfo}>
-                  <Text style={styles.verticalName} numberOfLines={2}>{r.name}</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Text style={styles.verticalName} numberOfLines={2}>{r.name}</Text>
+                    {isRecipePro(r) && !isPremium && <Lock size={14} color={T.warning} />}
+                  </View>
                   <View style={styles.verticalMeta}><Text style={styles.verticalCals}>{r.total_calories || 0} კკალ</Text></View>
                 </View>
                 <ChevronRight size={20} color={T.light} />
@@ -985,13 +1019,13 @@ export default function HomeScreen() {
         {/* INDEX 0 — Hero */}
         <Animated.View style={{ opacity: headerOpacity, overflow: 'hidden' }}>
           {isOffline && !viewAllSection && (
-            <View style={{ 
-              backgroundColor: T.warning + '15', 
-              marginHorizontal: 20, 
-              marginTop: 10, 
-              padding: 12, 
-              borderRadius: 15, 
-              flexDirection: 'row', 
+            <View style={{
+              backgroundColor: T.warning + '15',
+              marginHorizontal: 20,
+              marginTop: 10,
+              padding: 12,
+              borderRadius: 15,
+              flexDirection: 'row',
               alignItems: 'center',
               borderWidth: 1,
               borderColor: T.warning + '30'
@@ -1154,44 +1188,10 @@ export default function HomeScreen() {
         </View>
       </Animated.ScrollView>
 
-      <Modal visible={brandAlert.visible} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View
-            style={[
-              styles.modalContent,
-              {
-                borderWidth: 2,
-                borderColor: brandAlert.type === 'error' ? T.danger
-                  : brandAlert.type === 'success' ? T.success : T.warning,
-              },
-            ]}
-          >
-            <View style={styles.brandAlertIconBg}>
-              {brandAlert.type === 'success' ? <CheckCircle size={60} color={T.success} />
-                : brandAlert.type === 'error' ? <XCircle size={60} color={T.danger} />
-                  : <AlertCircle size={60} color={T.warning} />}
-            </View>
-            <Text style={styles.modalTitle}>{brandAlert.title}</Text>
-            <Text style={styles.brandAlertMessage}>{brandAlert.message}</Text>
-            <TouchableOpacity
-              style={[
-                styles.brandedRetryBtn,
-                {
-                  width: '100%',
-                  justifyContent: 'center',
-                  backgroundColor: brandAlert.type === 'error' ? T.danger
-                    : brandAlert.type === 'success' ? T.success : T.warning,
-                },
-              ]}
-              onPress={() => setBrandAlert({ ...brandAlert, visible: false })}
-            >
-              <Text style={{ fontFamily: T.fontFamily, color: '#FFF', fontWeight: 'bold', fontSize: T.fs_md }}>
-                გასაგებია
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+      <BrandAlert
+        state={brandAlert}
+        onClose={() => setBrandAlert({ ...brandAlert, visible: false })}
+      />
     </SafeAreaView>
   );
 }
@@ -1247,18 +1247,10 @@ const getStyles = (T: any) => StyleSheet.create({
   categoryPillActive: {
     backgroundColor: T.primary,
     borderColor: T.primary,
-    elevation: 3,
-    shadowColor: T.primary,
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
   },
   categoryPillSpecial: {
     borderColor: T.primary,
     borderWidth: 2,
-    shadowColor: T.primary,
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
   },
   categoryPillText: { fontFamily: T.fontFamily, fontSize: T.fs_md, fontWeight: '700', color: T.mid },
   categoryPillTextActive: { color: '#FFF', fontWeight: '900' },
@@ -1268,7 +1260,7 @@ const getStyles = (T: any) => StyleSheet.create({
   stateIconBg: { padding: 25, borderRadius: 40, marginBottom: T.xl },
   stateTitle: { fontFamily: T.fontFamily, fontSize: T.fs_xl, fontWeight: '900', color: T.dark, marginBottom: T.sm, textAlign: 'center' },
   stateSub: { fontFamily: T.fontFamily, fontSize: T.fs_md, color: T.mid, textAlign: 'center', lineHeight: 24, fontWeight: '600', marginBottom: 30 },
-  brandedRetryBtn: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 25, paddingVertical: T.md, borderRadius: T.r_md, elevation: 4 },
+  brandedRetryBtn: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 25, paddingVertical: T.md, borderRadius: T.r_md, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' },
   brandedRetryText: { fontFamily: T.fontFamily, color: '#FFF', fontSize: T.fs_md, fontWeight: 'bold' },
 
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: T.xl, marginBottom: T.md },
@@ -1276,36 +1268,36 @@ const getStyles = (T: any) => StyleSheet.create({
   seeAllText: { fontFamily: T.fontFamily, fontSize: T.fs_sm, fontWeight: '700', color: T.primary },
 
   carouselContainer: { paddingLeft: T.xl, paddingRight: T.sm, marginBottom: 28 },
-  trendingCard: { width: SW * 0.7, backgroundColor: T.card, borderRadius: T.r_xl, marginRight: T.md, overflow: 'hidden', elevation: 3, shadowColor: '#000', shadowOpacity: 0.07, shadowRadius: 10 },
+  trendingCard: { width: SW * 0.7, backgroundColor: T.card, borderRadius: T.r_xl, marginRight: T.md, overflow: 'hidden', borderWidth: 1, borderColor: T.border },
   trendingImg: { width: '100%', height: 160 },
   trendingInfo: { padding: T.md },
   trendingName: { fontFamily: T.fontFamily, fontSize: T.fs_md, fontWeight: '900', color: T.dark, marginBottom: T.sm },
   metaRow: { flexDirection: 'row', justifyContent: 'space-between' },
   metaTextSmall: { fontFamily: T.fontFamily, fontSize: T.fs_xs, color: T.mid, fontWeight: '700' },
-  heartBtn: { position: 'absolute', top: 12, right: 12, backgroundColor: 'rgba(255,255,255,0.92)', padding: 8, borderRadius: 20, elevation: 2 },
+  heartBtn: { position: 'absolute', top: 12, right: 12, backgroundColor: 'rgba(255,255,255,0.92)', padding: 8, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(0,0,0,0.05)' },
 
-  proteinCard: { width: 160, backgroundColor: T.card, borderRadius: T.r_lg, marginRight: T.md, overflow: 'hidden', elevation: 2, borderWidth: 1, borderColor: T.border },
+  proteinCard: { width: 160, backgroundColor: T.card, borderRadius: T.r_lg, marginRight: T.md, overflow: 'hidden', borderWidth: 1, borderColor: T.border },
   proteinImg: { width: '100%', height: 110 },
   proteinBadge: { position: 'absolute', top: 8, left: 8, backgroundColor: T.success, paddingHorizontal: 8, paddingVertical: 4, borderRadius: T.sm },
   proteinBadgeText: { fontFamily: T.fontFamily, color: '#FFF', fontSize: T.fs_xs, fontWeight: '900' },
   proteinInfo: { padding: T.sm },
   proteinName: { fontFamily: T.fontFamily, fontSize: T.fs_sm, fontWeight: '700', color: T.dark },
 
-  quickCard: { width: 140, backgroundColor: T.card, borderRadius: T.r_lg, marginRight: T.md, overflow: 'hidden', elevation: 2 },
+  quickCard: { width: 140, backgroundColor: T.card, borderRadius: T.r_lg, marginRight: T.md, overflow: 'hidden', borderWidth: 1, borderColor: T.border },
   quickImg: { width: '100%', height: 100 },
   quickInfo: { padding: T.sm },
   quickName: { fontFamily: T.fontFamily, fontSize: T.fs_sm, fontWeight: '700', color: T.dark, marginBottom: 4 },
   quickTime: { fontFamily: T.fontFamily, fontSize: T.fs_xs, fontWeight: '900', color: T.warning },
 
   verticalListContainer: { paddingHorizontal: T.xl },
-  verticalCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: T.card, padding: T.sm, borderRadius: T.r_lg, marginBottom: T.sm, elevation: 1, shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 4 },
+  verticalCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: T.card, padding: T.sm, borderRadius: T.r_lg, marginBottom: T.sm, borderWidth: 1, borderColor: T.border },
   verticalImg: { width: 70, height: 70, borderRadius: T.r_sm, marginRight: T.md },
   verticalInfo: { flex: 1 },
   verticalName: { fontFamily: T.fontFamily, fontSize: T.fs_md, fontWeight: '700', color: T.dark, marginBottom: 4 },
   verticalMeta: { backgroundColor: 'rgba(255,71,87,0.1)', alignSelf: 'flex-start', paddingHorizontal: T.sm, paddingVertical: 4, borderRadius: T.xs },
   verticalCals: { fontFamily: T.fontFamily, fontSize: T.fs_xs, color: T.danger, fontWeight: '900' },
 
-  gridCard: { width: '48%', backgroundColor: T.card, borderRadius: T.r_lg, marginBottom: T.md, overflow: 'hidden', elevation: 2, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 6 },
+  gridCard: { width: '48%', backgroundColor: T.card, borderRadius: T.r_lg, marginBottom: T.md, overflow: 'hidden', borderWidth: 1, borderColor: T.border },
   gridImg: { width: '100%', height: 130 },
   gridInfo: { padding: T.sm },
   gridName: { fontFamily: T.fontFamily, fontSize: T.fs_sm, fontWeight: '900', color: T.dark, marginBottom: T.sm },

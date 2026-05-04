@@ -5,21 +5,17 @@ import {
   Animated, StyleSheet, Pressable
 } from 'react-native';
 import { 
-  LucideIcon, Scale as ScaleIcon, Scan as ScanIcon, 
-  ScanFace as ScanFaceIcon, Camera as CameraIcon, 
-  Image as ImageIconLucide 
+  Scale as ScaleIcon, Camera as CameraIcon, 
+  Image as ImageIconLucide, Zap
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
 interface WeightVerificationModalProps {
-  showWeightModal: boolean;
-  setShowWeightModal: (v: boolean) => void;
-  showVerifyModal: boolean;
-  setShowVerifyModal: (v: boolean) => void;
+  visible: boolean;
+  onClose: () => void;
   newWeight: string;
   setNewWeight: (v: string) => void;
   isVerifying: boolean;
-  onContinue: () => void;
   onCameraPress: () => void;
   onGalleryPress: () => void;
   onManualSave: () => void;
@@ -28,10 +24,9 @@ interface WeightVerificationModalProps {
 }
 
 export const WeightVerificationModal = ({
-  showWeightModal, setShowWeightModal,
-  showVerifyModal, setShowVerifyModal,
+  visible, onClose,
   newWeight, setNewWeight, isVerifying,
-  onContinue, onCameraPress, onGalleryPress, onManualSave,
+  onCameraPress, onGalleryPress, onManualSave,
   C, S
 }: WeightVerificationModalProps) => {
 
@@ -39,7 +34,7 @@ export const WeightVerificationModal = ({
   const opacityAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    if (showWeightModal || showVerifyModal) {
+    if (visible) {
       Animated.parallel([
         Animated.spring(scaleAnim, { toValue: 1, friction: 8, useNativeDriver: Platform.OS !== 'web' }),
         Animated.timing(opacityAnim, { toValue: 1, duration: 250, useNativeDriver: Platform.OS !== 'web' })
@@ -48,188 +43,222 @@ export const WeightVerificationModal = ({
       scaleAnim.setValue(0.9);
       opacityAnim.setValue(0);
     }
-  }, [showWeightModal, showVerifyModal]);
+  }, [visible]);
 
   const handleClose = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setShowWeightModal(false);
-    setShowVerifyModal(false);
-    setNewWeight('');
+    if (!isVerifying) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      onClose();
+    }
   };
 
   return (
-    <>
-      {/* ⚖️ WEIGHT INPUT MODAL */}
-      <Modal visible={showWeightModal} transparent animationType="fade">
-        <View style={localStyles.overlay}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} />
-          <Animated.View style={[
-            localStyles.centeredSheet, 
-            { transform: [{ scale: scaleAnim }], opacity: opacityAnim, backgroundColor: C.surface }
-          ]}>
-            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-              <View style={localStyles.iconCircle}>
-                <ScaleIcon size={32} color={C.primaryDark} />
-              </View>
-              <Text style={localStyles.title}>მოდი, ავიწონოთ! 💪</Text>
-              <Text style={localStyles.sub}>რამდენს უჩვენებს დღეს სასწორი?</Text>
-              
-              <TextInput
-                style={[localStyles.input, { color: C.ink, borderColor: C.border }]}
-                keyboardType="decimal-pad"
-                value={newWeight}
-                onChangeText={setNewWeight}
-                autoFocus
-                placeholder="00.0"
-                placeholderTextColor={C.inkFaint}
-              />
-
-              <View style={localStyles.btnRow}>
-                <TouchableOpacity style={localStyles.ghostBtn} onPress={handleClose}>
-                  <Text style={[localStyles.ghostBtnTxt, { color: C.inkMid }]}>მოგვიანებით</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[localStyles.solidBtn, { backgroundColor: C.primary }]} onPress={onContinue}>
-                  <Text style={localStyles.solidBtnTxt}>განვაგრძოთ! 🚀</Text>
-                </TouchableOpacity>
-              </View>
-            </KeyboardAvoidingView>
-          </Animated.View>
-        </View>
-      </Modal>
-
-      {/* 🕵️ VERIFICATION MODAL */}
-      <Modal visible={showVerifyModal} transparent animationType="fade">
-        <View style={localStyles.overlay}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={() => setShowVerifyModal(false)} />
-          <Animated.View style={[
-            localStyles.centeredSheet, 
-            { transform: [{ scale: scaleAnim }], opacity: opacityAnim, backgroundColor: C.surface }
-          ]}>
-             {isVerifying ? (
-              <View style={{ alignItems: 'center', paddingVertical: 20 }}>
+    <Modal visible={visible} transparent animationType="fade">
+      <View style={localStyles.overlay}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} />
+        <Animated.View style={[
+          localStyles.centeredSheet, 
+          { transform: [{ scale: scaleAnim }], opacity: opacityAnim, backgroundColor: C.surface }
+        ]}>
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+            
+            {isVerifying ? (
+              <View style={{ alignItems: 'center', paddingVertical: 40 }}>
                 <ActivityIndicator size="large" color={C.primary} />
-                <Text style={[localStyles.title, { marginTop: 24 }]}>AI ამოწმებს... 🕵️</Text>
-                <Text style={localStyles.sub}>სასწორის ფოტოს ვამუშავებთ</Text>
+                <Text style={[localStyles.title, { marginTop: 24, color: C.ink }]}>AI ამოწმებს... 🕵️</Text>
+                <Text style={localStyles.sub}>ფოტოს ვამუშავებთ და ვაანალიზებთ</Text>
               </View>
             ) : (
-              <View>
-                <View style={[localStyles.iconCircle, { backgroundColor: C.primaryLight }]}>
-                  <ScanFaceIcon size={38} color={C.primaryDark} />
+              <>
+                <View style={[localStyles.iconCircle, { backgroundColor: C.surfaceMid }]}>
+                  <ScaleIcon size={32} color={C.primaryDark} />
                 </View>
-                <Text style={localStyles.title}>ვერიფიკაცია 🧐</Text>
-                <Text style={localStyles.sub}>გვიჩვენე, რომ {newWeight} კგ ხარ — გადაიღე სასწორის ფოტო</Text>
+                <Text style={[localStyles.title, { color: C.ink }]}>მოდი, ავიწონოთ! 💪</Text>
+                <Text style={localStyles.sub}>რამდენს უჩვენებს დღეს სასწორი?</Text>
                 
-                <View style={localStyles.btnRow}>
-                  <TouchableOpacity style={[localStyles.solidBtn, { backgroundColor: C.primary, flex: 1 }]} onPress={onCameraPress}>
-                    <CameraIcon size={18} color="#FFF" />
-                    <Text style={localStyles.solidBtnTxt}>კამერა</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={[localStyles.ghostBtn, { flex: 1 }]} onPress={onGalleryPress}>
-                    <ImageIconLucide size={18} color={C.inkMid} />
-                    <Text style={[localStyles.ghostBtnTxt, { color: C.inkMid }]}>გალერეა</Text>
-                  </TouchableOpacity>
+                <View style={localStyles.inputRow}>
+                  <TextInput
+                    style={[localStyles.input, { color: C.ink }]}
+                    keyboardType="decimal-pad"
+                    value={newWeight}
+                    onChangeText={setNewWeight}
+                    autoFocus
+                    placeholder="00.0"
+                    placeholderTextColor={C.inkFaint}
+                    maxLength={5}
+                  />
+                  <Text style={[localStyles.unit, { color: C.inkLight }]}>კგ</Text>
                 </View>
 
-                <TouchableOpacity 
-                  style={localStyles.manualAction} 
-                  onPress={onManualSave}
-                >
-                  <Text style={{ color: C.orange, fontWeight: '800', fontSize: 13, textAlign: 'center' }}>
-                    ხელით შენახვა (ვერიფიკაციის გარეშე)
-                  </Text>
-                </TouchableOpacity>
-              </View>
+                <View style={localStyles.btnStack}>
+                  <TouchableOpacity 
+                    style={[localStyles.solidBtn, { backgroundColor: C.primary, shadowColor: C.primary }]} 
+                    onPress={onCameraPress}
+                    activeOpacity={0.8}
+                  >
+                    <View style={localStyles.btnIconRow}>
+                      <CameraIcon size={20} color="#FFF" />
+                      <Text style={localStyles.solidBtnTxt}>AI კამერა</Text>
+                    </View>
+                    <View style={localStyles.xpBadge}>
+                      <Zap size={12} color={C.primaryDark} fill={C.primaryDark} />
+                      <Text style={[localStyles.xpBadgeTxt, { color: C.primaryDark }]}>+50 XP</Text>
+                    </View>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity 
+                    style={[localStyles.outlinedBtn, { borderColor: C.primaryLight, backgroundColor: C.surfaceMid }]} 
+                    onPress={onGalleryPress}
+                    activeOpacity={0.7}
+                  >
+                    <View style={localStyles.btnIconRow}>
+                      <ImageIconLucide size={18} color={C.primary} />
+                      <Text style={[localStyles.outlinedBtnTxt, { color: C.primaryDark }]}>გალერეიდან ატვირთვა</Text>
+                    </View>
+                    <Text style={[localStyles.xpBadgeTxtSmall, { color: C.primary }]}>+50 XP</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity style={localStyles.ghostBtn} onPress={onManualSave} activeOpacity={0.6}>
+                    <Text style={[localStyles.ghostBtnTxt, { color: C.inkLight }]}>უბრალოდ შენახვა (+10 XP)</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
             )}
-          </Animated.View>
-        </View>
-      </Modal>
-    </>
+
+          </KeyboardAvoidingView>
+        </Animated.View>
+      </View>
+    </Modal>
   );
 };
 
 const localStyles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: 'rgba(15, 23, 42, 0.7)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
   },
   centeredSheet: {
     width: '100%',
-    borderRadius: 32,
+    borderRadius: 36,
     padding: 28,
     shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowRadius: 20,
-    elevation: 10,
+    shadowOpacity: 0.25,
+    shadowRadius: 30,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 15,
   },
   iconCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: '#F8FAFC',
+    width: 68,
+    height: 68,
+    borderRadius: 34,
     justifyContent: 'center',
     alignItems: 'center',
     alignSelf: 'center',
     marginBottom: 20,
   },
   title: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: '900',
     textAlign: 'center',
     marginBottom: 8,
     letterSpacing: -0.5,
   },
   sub: {
-    fontSize: 14,
+    fontSize: 15,
     textAlign: 'center',
     color: '#64748B',
-    lineHeight: 20,
-    marginBottom: 24,
+    lineHeight: 22,
+    marginBottom: 30,
     paddingHorizontal: 10,
+    fontWeight: '500',
   },
-  input: {
-    width: '100%',
-    height: 80,
-    fontSize: 48,
-    fontWeight: '900',
-    textAlign: 'center',
-    marginBottom: 28,
-    letterSpacing: -1,
-  },
-  btnRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  solidBtn: {
-    flex: 1.5,
+  inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 36,
+  },
+  input: {
+    fontSize: 64,
+    fontWeight: '900',
+    textAlign: 'center',
+    letterSpacing: -2,
+    height: 80,
+    minWidth: 140,
+  },
+  unit: {
+    fontSize: 24,
+    fontWeight: '800',
+    marginLeft: 4,
+    marginTop: 15,
+  },
+  btnStack: {
+    gap: 12,
+  },
+  btnIconRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 8,
-    paddingVertical: 16,
-    borderRadius: 18,
+  },
+  solidBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 18,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
   },
   solidBtnTxt: {
     color: '#FFF',
     fontSize: 16,
     fontWeight: '900',
+    letterSpacing: 0.2,
   },
-  ghostBtn: {
-    flex: 1,
+  xpBadge: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    borderRadius: 18,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: '#FFF',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+    gap: 4,
   },
-  ghostBtnTxt: {
+  xpBadgeTxt: {
+    fontSize: 13,
+    fontWeight: '900',
+  },
+  outlinedBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    borderWidth: 2,
+  },
+  outlinedBtnTxt: {
     fontSize: 15,
     fontWeight: '800',
   },
-  manualAction: {
-    marginTop: 20,
-    paddingVertical: 10,
-  }
+  xpBadgeTxtSmall: {
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  ghostBtn: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    marginTop: 4,
+  },
+  ghostBtnTxt: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
 });

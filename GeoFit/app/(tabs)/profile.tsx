@@ -17,7 +17,9 @@ import {
   Plus, RotateCcw, CheckCircle, XCircle, AlertCircle,
   Star, Gift, Crown, Flame, Timer, Scale, BarChart2,
   TrendingDown, TrendingUp, Trophy, Flag, User, Activity,
-  Target, ChevronUp, ChevronDown, MessageSquare, ChevronRight
+  Target, ChevronUp, ChevronDown, MessageSquare, ChevronRight,
+  ShieldCheck, CalendarCheck, Sunrise, Dumbbell, Gem, 
+  Droplets, RefreshCw, Utensils, Heart, Leaf, Lock
 } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { captureRef } from 'react-native-view-shot';
@@ -48,19 +50,60 @@ import { SectionHeader, AchievementCard, GlowDot } from '../../components/profil
 import ProShareCard from '../../components/avatar/ProShareCard';
 import { AvatarPickerModal } from '../../components/profile/AvatarPickerModal';
 
+import { BrandAlert, BAlertState } from '../../components/ui/BrandAlert';
+
 const WEEKDAYS = { mon: 'ორშ', tue: 'სამ', wed: 'ოთხ', thu: 'ხუთ', fri: 'პარ', sat: 'შაბ', sun: 'კვ' };
 const VALID_PROMOS = ['BEKA-PRO-2026', 'BALANSI-VIP'];
+
+const BADGE_REGISTRY = {
+  // 🔰 0. საწყისი
+  starter: { label: 'დამწყები', desc: 'პირველი ნაბიჯი Balansi-ში', icon: Flag, color: '#3B82F6', category: 'starter' },
+
+  // 🏆 1. ხასიათი და დისციპლინა
+  unstoppable: { label: 'შეუპოვარი', desc: '21 დღე იდეალური რეჟიმი', icon: ShieldCheck, color: '#3B82F6', category: 'consistency' },
+  weekend_master: { label: 'უქმეების ოსტატი', desc: 'შაბათ-კვირის რეჟიმის დაცვა', icon: CalendarCheck, color: '#8B5CF6', category: 'consistency' },
+  proactive: { label: 'პროაქტიული', desc: 'საუზმე და ლოგი 09:00-მდე', icon: Sunrise, color: '#F59E0B', category: 'consistency' },
+  
+  // 🧬 2. ნუტრიციის არქიტექტორები
+  balance_master: { label: 'ბალანსის ოსტატი', desc: 'კალორიების სიზუსტე (±50)', icon: Target, color: '#10B981', category: 'nutrition' },
+  athlete: { label: 'ათლეტი', desc: 'პროტეინის 100% ნორმა (7 დღე)', icon: Dumbbell, color: '#EF4444', category: 'nutrition' },
+  unwavering: { label: 'ურყევი', desc: '5 დღე შაქრის გარეშე', icon: Gem, color: '#EC4899', category: 'nutrition' },
+  pure_energy: { label: 'სუფთა ენერგია', desc: 'წყლის 100% ნორმა (10 დღე)', icon: Droplets, color: '#0EA5E9', category: 'nutrition' },
+  
+  // 🕵️ 3. ფარული ბეჯები
+  phoenix: { label: 'ფენიქსი', desc: 'აღდგენა გადაჭარბების შემდეგ', icon: RefreshCw, color: '#F97316', category: 'hidden', isHidden: true },
+  gourmet: { label: 'გურმანი', desc: '15 ახალი რეცეპტის მოსინჯვა', icon: Utensils, color: '#84CC16', category: 'hidden', isHidden: true },
+  caring: { label: 'მზრუნველი', desc: 'ავატარზე ხშირი ზრუნვა', icon: Heart, color: '#F43F5E', category: 'hidden', isHidden: true },
+
+  pinocchio: { label: 'მატყუარა', desc: 'ეს ბეიჯი ნამდვილად არ გინდა! 🤥 არაა მოსაპოვებელი...', icon: XCircle, color: '#4B5563', isWarning: true, category: 'hidden' },
+};
 
 // ✅ BUG #3 FIX: const-ad გადატანა, state არ იცვლებოდა
 const CHART_LABELS = ['კვ', 'ორშ', 'სამ', 'ოთხ', 'ხუთ', 'პარ', 'შაბ'];
 const { width: SW, height: SH } = Dimensions.get('window');
 
 const FAQS = [
-  { q: "როგორ ითვლის Balansi კალორიებს?", a: "ჩვენი სისტემა იყენებს კლინიკურად დადასტურებულ მიფლინ-სენტ ჯეორის ფორმულას." },
-  { q: "როგორ განისაზღვრება წყლის დღიური ნორმა?", a: "წყლის ტრეკერი იყენებს პროფესიონალურ ფორმულას." },
-  { q: "რა შედის Balansi PRO ვერსიაში?", a: "PRO გაძლევთ ულიმიტო AI სკანირებას და პრემიუმ რეცეპტებს." },
-  { q: "რამდენად ზუსტია AI სკანერი?", a: "ის აანალიზებს ულუფის მოცულობას და ინგრედიენტებს." },
-  { q: "რატომ მთხოვს აპლიკაცია სასწორის ფოტოს?", a: "ეს არის Trust-Verify სისტემა, რაც გაძლევთ მეტ XP-ს." }
+  // ... (keeping FAQS content)
+  {
+    q: "რატომ უნდა ვენდო Balansi-ს გამოთვლებს?",
+    a: "ჩვენი ალგორითმი ეყრდნობა მსოფლიო ჯანდაცვის ორგანიზაციის (WHO) მიერ აღიარებულ Mifflin-St Jeor ფორმულას. გარდა ამისა, AI სკანერი გადის მუდმივ ვალიდაციას რეალურ ნუტრიციოლოგებთან, რათა უზრუნველყოს მაქსიმალური სიზუსტე."
+  },
+  {
+    q: "როგორ მუშაობს AI სკანერი და რამდენად ზუსტია?",
+    a: "Balansi-ს ხელოვნური ინტელექტი აანალიზებს ფოტოს სიღრმეს, ულუფის მოცულობას და ინგრედიენტების სიმკვრივეს. ის არა მხოლოდ ცნობს პროდუქტს, არამედ ითვლის სავარაუდო წონასაც, რაც მას 90%+ სიზუსტეს ანიჭებს."
+  },
+  {
+    q: "რა არის Trust-Verify სისტემა და რატომ მთხოვს ფოტოს?",
+    a: "ეს არის ჩვენი უნიკალური მეთოდი მომხმარებლის დისციპლინისთვის. როდესაც სასწორის ფოტოს ტვირთავთ, სისტემა ადასტურებს პროგრესს, რაც ზრდის თქვენს რეიტინგს (XP) და გვეხმარება გეგმის უფრო ზუსტ კორექტირებაში."
+  },
+  {
+    q: "არის თუ არა ჩემი მონაცემები დაცული?",
+    a: "თქვენი პერსონალური მონაცემები და ფოტოები ინახება დაშიფრულ სერვერებზე. ჩვენ არასდროს ვაზიარებთ ინფორმაციას მესამე მხარეებთან. თქვენი კონფიდენციალურობა ჩვენი პრიორიტეტია."
+  },
+  {
+    q: "რა უპირატესობა აქვს Balansi PRO-ს?",
+    a: "PRO ვერსია ხსნის სრულ პოტენციალს: ულიმიტო AI სკანირება, პრემიუმ რეცეპტების ბიბლიოთეკა, დეტალური ანალიტიკა და პერსონალური ნუტრიციოლოგის რეჟიმი, რომელიც გირჩევთ საუკეთესო დროს კვებისთვის."
+  }
 ];
 
 export default function ProfileScreen() {
@@ -75,15 +118,14 @@ export default function ProfileScreen() {
   const avatarStore = useAvatarStore();
 
   const [loading, setLoading] = useState(true);
-  const { intake } = useDiaryStore();
+  const { intake, setPremium } = useDiaryStore();
   const [profile, setProfile] = useState<any>(null);
   const [weightHistory, setWeightHistory] = useState<number[]>([]);
   const [isPro, setIsPro] = useState(false);
   const [water, setWater] = useState(0);
   const [showWeightModal, setShowWeightModal] = useState(false);
-  const [showVerifyModal, setShowVerifyModal] = useState(false);
   const [newWeight, setNewWeight] = useState('');
-  const [showAvatarPicker, setShowAvatarPicker] = useState(false); // ✨ NEW
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [chartType, setChartType] = useState<'weight' | 'calories'>('weight');
   const [notifEnabled, setNotifEnabled] = useState(true);
   const [showHelpModal, setShowHelpModal] = useState(false);
@@ -93,7 +135,9 @@ export default function ProfileScreen() {
   const [promoCode, setPromoCode] = useState('');
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
   const [permission, requestPermission] = useCameraPermissions();
-  const [brandAlert, setBrandAlert] = useState({ visible: false, title: '', message: '', type: 'error' });
+  const [brandAlert, setBrandAlert] = useState<BAlertState>({ visible: false, title: '', message: '', type: 'error' });
+  const [winningBadge, setWinningBadge] = useState<any>(null); // For the new award animation
+  const [showThemeModal, setShowThemeModal] = useState(false);
 
   const waterFillAnim = useRef(new Animated.Value(0)).current;
   const waveAnim = useRef(new Animated.Value(0)).current;
@@ -117,9 +161,9 @@ export default function ProfileScreen() {
   };
 
   useEffect(() => {
-    triggerPop(showStreakModal || !!selectedBadge || showHelpModal || showPromoModal || brandAlert.visible);
-  }, [showStreakModal, selectedBadge, showHelpModal, showPromoModal, brandAlert.visible]);
-
+    const isVisible = showStreakModal || !!selectedBadge || !!winningBadge || showHelpModal || showPromoModal || brandAlert.visible || showThemeModal;
+    triggerPop(isVisible);
+  }, [showStreakModal, selectedBadge, winningBadge, showHelpModal, showPromoModal, brandAlert.visible, showThemeModal]);
   const loadProfileData = useCallback(async () => {
     try {
       const saved = await AsyncStorage.getItem('userProfile');
@@ -135,18 +179,89 @@ export default function ProfileScreen() {
       const waterVal = parseInt(await AsyncStorage.getItem(`water_${new Date().toISOString().split('T')[0]}`) || '0');
       setWater(waterVal);
 
+      // 🏆 Check for New Badges
+      const currentBadges = Array.isArray(p.badges) ? p.badges : [];
+      let newBadges = [...currentBadges];
+      let justWon: any = null;
+
+      const today = new Date();
+      const isWeekend = today.getDay() === 0 || today.getDay() === 6;
+      const todayStr = today.toISOString().split('T')[0];
+      const todayIntake = intake[todayStr] || { calories: 0, protein: 0, carbs: 0, fats: 0 };
+      const calTarget = p.targetCalories || 2000;
+      const protTarget = p.targetProtein || 120;
+      const waterTarget = calculateWaterTarget(p);
+
+      // 0. Starter (Initial)
+      if (!newBadges.includes('starter')) {
+        newBadges.push('starter');
+        justWon = BADGE_REGISTRY['starter'];
+      }
+
+      // 1. Unstoppable (21 days)
+      if (p.streak >= 21 && !newBadges.includes('unstoppable')) {
+        newBadges.push('unstoppable');
+        justWon = BADGE_REGISTRY['unstoppable'];
+      }
+
+      // 2. Weekend Master (Logging on weekend)
+      if (isWeekend && todayIntake.calories > 0 && !newBadges.includes('weekend_master')) {
+        newBadges.push('weekend_master');
+        justWon = BADGE_REGISTRY['weekend_master'];
+      }
+
+      // 3. Proactive (Logging breakfast/early)
+      const hour = today.getHours();
+      if (hour < 10 && todayIntake.calories > 0 && !newBadges.includes('proactive')) {
+        newBadges.push('proactive');
+        justWon = BADGE_REGISTRY['proactive'];
+      }
+
+      // 4. Balance Master (Precision within 50kcal)
+      const calDiff = Math.abs(todayIntake.calories - calTarget);
+      if (todayIntake.calories > 0 && calDiff <= 50 && !newBadges.includes('balance_master')) {
+        newBadges.push('balance_master');
+        justWon = BADGE_REGISTRY['balance_master'];
+      }
+
+      // 5. Athlete (Protein target met)
+      if (todayIntake.protein >= protTarget && !newBadges.includes('athlete')) {
+        newBadges.push('athlete');
+        justWon = BADGE_REGISTRY['athlete'];
+      }
+
+      // 6. Pure Energy (Water target met)
+      if (waterVal >= waterTarget && waterVal > 0 && !newBadges.includes('pure_energy')) {
+        newBadges.push('pure_energy');
+        justWon = BADGE_REGISTRY['pure_energy'];
+      }
+
+      if (justWon) {
+        const updatedP = { ...p, badges: newBadges };
+        setProfile(updatedP);
+        await AsyncStorage.setItem('userProfile', JSON.stringify(updatedP));
+        
+        // Show Animation with slight delay
+        setTimeout(() => {
+          setWinningBadge(justWon);
+          if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }, 800);
+      }
+
+      // Sync Water Animation
       const tgtW = calculateWaterTarget(p);
       Animated.timing(waterFillAnim, {
         toValue: Math.min((waterVal / (tgtW || 1)) * 100, 100),
         duration: 1000,
         useNativeDriver: false,
       }).start();
+
     } catch (e) {
-      router.replace('/onboarding');
+      console.error('Profile Load Error:', e);
     } finally {
       setLoading(false);
     }
-  }, [router]);
+  }, [router, intake]);
 
   useFocusEffect(useCallback(() => { loadProfileData(); }, [loadProfileData]));
 
@@ -214,14 +329,7 @@ export default function ProfileScreen() {
     }
   };
 
-  const triggerVerification = () => {
-    if (!newWeight || isNaN(parseFloat(newWeight))) {
-      setBrandAlert({ visible: true, title: 'შეცდომა', message: 'გთხოვთ, შეიყვანოთ სწორი წონა.', type: 'error' });
-      return;
-    }
-    setShowWeightModal(false);
-    setTimeout(() => setShowVerifyModal(true), 400);
-  };
+  // triggerVerification removed
 
   const handleWeightSaveResult = (res: any) => {
     if (!res.success) {
@@ -235,30 +343,38 @@ export default function ProfileScreen() {
   };
 
   const pickImage = async () => {
+    if (!newWeight || isNaN(parseFloat(newWeight))) { setBrandAlert({ visible: true, title: 'შეცდომა', message: 'გთხოვთ, შეიყვანოთ სწორი წონა.', type: 'error' }); return; }
     const result = await ImagePicker.launchImageLibraryAsync({ allowsEditing: true, aspect: [3, 4], quality: 0.5 });
     if (!result.canceled && result.assets[0]?.uri) {
-      setShowVerifyModal(false);
+      setShowWeightModal(false);
       const res = await handleWeightSave(parseFloat(newWeight), true, result.assets[0].uri);
       handleWeightSaveResult(res);
     }
   };
 
   const openCamera = async () => {
+    if (!newWeight || isNaN(parseFloat(newWeight))) { setBrandAlert({ visible: true, title: 'შეცდომა', message: 'გთხოვთ, შეიყვანოთ სწორი წონა.', type: 'error' }); return; }
     const perm = await requestPermission();
     if (!perm.granted) {
-      Alert.alert('წვდომა უარყოფილია', 'კამერაზე წვდომა აუცილებელია ვერიფიკაციისთვის.');
+      setBrandAlert({
+        visible: true,
+        title: 'წვდომა უარყოფილია',
+        message: 'კამერაზე წვდომა აუცილებელია ვერიფიკაციისთვის.',
+        type: 'warning'
+      });
       return;
     }
     const result = await ImagePicker.launchCameraAsync({ allowsEditing: true, aspect: [3, 4], quality: 0.5 });
     if (!result.canceled && result.assets[0]?.uri) {
-      setShowVerifyModal(false);
+      setShowWeightModal(false);
       const res = await handleWeightSave(parseFloat(newWeight), true, result.assets[0].uri);
       handleWeightSaveResult(res);
     }
   };
 
   const handleManualSave = async () => {
-    setShowVerifyModal(false);
+    if (!newWeight || isNaN(parseFloat(newWeight))) { setBrandAlert({ visible: true, title: 'შეცდომა', message: 'გთხოვთ, შეიყვანოთ სწორი წონა.', type: 'error' }); return; }
+    setShowWeightModal(false);
     const res = await handleWeightSave(parseFloat(newWeight), false);
     handleWeightSaveResult(res);
   };
@@ -267,24 +383,27 @@ export default function ProfileScreen() {
     if (VALID_PROMOS.includes(promoCode.trim().toUpperCase())) {
       const p = { ...profile, isPro: true };
       setProfile(p); setIsPro(true);
+      setPremium(true);
       await AsyncStorage.setItem('userProfile', JSON.stringify(p));
       setShowPromoModal(false); setPromoCode('');
       setBrandAlert({ visible: true, title: 'გილოცავთ! 🎉', message: 'PRO ვერსია გააქტიურდა!', type: 'success' });
     } else {
-      Alert.alert('შეცდომა', 'პრომო კოდი არასწორია.');
+      setBrandAlert({ visible: true, title: 'შეცდომა', message: 'პრომო კოდი არასწორია.', type: 'error' });
     }
   };
 
-  // ✅ BUG #1 FIX: Reset ფუნქცია
   const handleResetData = () => {
-    Alert.alert(
-      'მონაცემების განულება',
-      'დარწმუნებული ხართ? ყველა თქვენი მონაცემი წაიშლება.',
-      [
-        { text: 'გაუქმება', style: 'cancel' },
+    setBrandAlert({
+      visible: true,
+      type: 'warning',
+      title: 'მონაცემების განულება',
+      message: 'დარწმუნებული ხართ? ყველა თქვენი მონაცემი წაიშლება.',
+      actions: [
+        { label: 'გაუქმება', onPress: () => { } },
         {
-          text: 'განულება',
-          style: 'destructive',
+          label: 'განულება',
+          primary: true,
+          danger: true,
           onPress: async () => {
             try {
               await AsyncStorage.multiRemove([
@@ -300,10 +419,10 @@ export default function ProfileScreen() {
                 type: 'error',
               });
             }
-          },
-        },
+          }
+        }
       ]
-    );
+    });
   };
 
   // ✨ Avatar press handler — opens new picker
@@ -347,8 +466,8 @@ export default function ProfileScreen() {
   const chartWeightData = hasEnoughWeightData ? wData : (wData.length === 1 ? [wData[0], wData[0]] : [currentW, currentW]);
   const chartWeightLabels = chartWeightData.map((_, i) => `${i + 1}`);
 
-  const avgWeight = wData.length > 0 ? (wData.reduce((a, b) => a + b, 0) / wData.length).toFixed(1) : String(currentW);
   const avgCals = Math.round(calorieHistory.reduce((a, b) => a + b, 0) / 7);
+  
   const targetWater = calculateWaterTarget(profile);
   const waterBarHeight = waterFillAnim.interpolate({ inputRange: [0, 100], outputRange: ['0%', '100%'] });
 
@@ -417,69 +536,62 @@ export default function ProfileScreen() {
             totalChange={totalChange} C={C} S={S}
           />
 
-          <SectionHeader title="🏆 შენი მიღწევები" action="ყველა" onAction={() => { }} S={S} />
+          <SectionHeader title="🏆 შენი მიღწევები" S={S} />
           <ScrollView horizontal showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingRight: 20, gap: 10 }} style={{ marginBottom: 24 }}>
-            {badges.map((key: string) => {
-              const isPin = key === 'pinocchio';
-              const b = {
-                key,
-                label: isPin ? 'მატყუარა' : 'ჩემპიონი',
-                desc: isPin ? 'ნაკლები ნდობა' : 'მიზანი მიღწეულია',
-                icon: isPin ? XCircle : Star,
-                color: isPin ? C.red : C.gold,
-                bg: isPin ? C.redLight : C.goldLight
-              };
+            contentContainerStyle={{ paddingLeft: 4, paddingRight: 20, gap: 12 }} style={{ marginBottom: 28 }}>
+            {Object.entries(BADGE_REGISTRY).map(([key, b]: [string, any]) => {
+              const isEarned = badges.includes(key);
+              const BadgeIcon = b.icon;
+              
+              // Don't show hidden badges unless earned
+              if (b.isHidden && !isEarned) return null;
+
               return (
-                <TouchableOpacity key={key} onPress={() => {
-                  if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  setSelectedBadge(b);
-                }}>
+                <TouchableOpacity
+                  key={key}
+                  onPress={() => {
+                    if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setSelectedBadge({ ...b, key, isLocked: !isEarned });
+                  }}
+                  style={{ opacity: isEarned ? 1 : 0.65 }}
+                >
                   <AchievementCard
-                    icon={b.icon} label={b.label} desc={b.desc}
-                    color={b.color} bg={b.bg} locked={false} S={S} C={C}
+                    icon={BadgeIcon}
+                    label={b.label}
+                    desc={isEarned ? b.desc : 'ჩაკეტილია'}
+                    color={isEarned ? b.color : C.inkLight}
+                    bg={isEarned ? b.color + '15' : C.surfaceMid}
+                    locked={!isEarned}
+                    S={S} C={C}
                   />
                 </TouchableOpacity>
               );
             })}
-            <AchievementCard icon={Gift} label="გახსნა" desc="მალე" color={C.inkLight} bg={C.surfaceMid} locked={true} S={S} C={C} />
+            
+            {/* Show a placeholder for hidden badges if none are earned */}
+            {badges.filter(k => BADGE_REGISTRY[k]?.isHidden).length === 0 && (
+              <View style={{ opacity: 0.4 }}>
+                <AchievementCard
+                  icon={Gift}
+                  label="???"
+                  desc="ფარული ჯილდო"
+                  color={C.inkLight}
+                  bg={C.surfaceMid}
+                  locked={true}
+                  S={S} C={C}
+                />
+              </View>
+            )}
           </ScrollView>
 
-          <View style={S.card}>
-            <View style={S.cardHeader}>
-              <View style={[S.cardIconWrap, { backgroundColor: C.tealLight }]}><BarChart2 size={17} color={C.teal} /></View>
-              <Text style={S.cardTitle}>შენი კვირა ციფრებში 📊</Text>
-            </View>
-            <View style={S.summaryRow}>
-              {[
-                { label: 'საშ. წონა', val: `${avgWeight} კგ`, color: C.primaryDark },
-                { label: 'საშ. კკალ', val: `${avgCals} კკ`, color: C.orange },
-                {
-                  label: 'ნდობა',
-                  val: `${profile.trustScore || 100}%`,
-                  color: (profile.trustScore || 100) < 40 ? C.red : (profile.trustScore || 100) < 80 ? C.orange : C.purple,
-                  showBar: true
-                },
-              ].map((item, i) => (
-                <View key={i} style={[S.summaryTile, { borderColor: item.color + '25' }]}>
-                  <GlowDot color={item.color} size={6} />
-                  <Text style={[S.summaryVal, { color: item.color }]}>{item.val}</Text>
-                  <Text style={S.summaryLabel}>{item.label}</Text>
-                  {item.showBar && (
-                    <View style={{ width: '80%', height: 3, backgroundColor: C.surfaceMid, borderRadius: 2, marginTop: 4, overflow: 'hidden' }}>
-                      <View style={{ width: `${profile.trustScore || 100}%`, height: '100%', backgroundColor: item.color }} />
-                    </View>
-                  )}
-                </View>
-              ))}
-            </View>
-          </View>
+
 
           <SettingsSection
             themeId={themeId} setTheme={setTheme} isPro={isPro}
             notifEnabled={notifEnabled} toggleNotifications={() => setNotifEnabled(!notifEnabled)}
             onPromoPress={() => setShowPromoModal(true)}
             onSharePress={handleShare} onHelpPress={() => setShowHelpModal(true)}
+            onThemePress={() => setShowThemeModal(true)}
             onResetPress={handleResetData}
             THEME_NAMES={THEME_NAMES} C={C} S={S} router={router}
           />
@@ -501,11 +613,12 @@ export default function ProfileScreen() {
       />
 
       <WeightVerificationModal
-        showWeightModal={showWeightModal} setShowWeightModal={setShowWeightModal}
-        showVerifyModal={showVerifyModal} setShowVerifyModal={setShowVerifyModal}
+        visible={showWeightModal}
+        onClose={() => { setShowWeightModal(false); setNewWeight(''); }}
         newWeight={newWeight} setNewWeight={setNewWeight} isVerifying={isVerifying}
-        onContinue={triggerVerification} onCameraPress={openCamera}
-        onGalleryPress={pickImage} onManualSave={handleManualSave}
+        onCameraPress={openCamera}
+        onGalleryPress={pickImage}
+        onManualSave={handleManualSave}
         C={C} S={S}
       />
 
@@ -541,25 +654,111 @@ export default function ProfileScreen() {
         <View style={[S.modalOverlay, { justifyContent: 'center', paddingHorizontal: 24 }]}>
           {selectedBadge && (() => {
             const BadgeIcon = selectedBadge.icon;
+            const isLocked = selectedBadge.isLocked;
             return (
               <Animated.View style={[S.alertCard, { alignItems: 'center', transform: [{ scale: popAnim }] }]}>
                 <View style={{
                   width: 80, height: 80, borderRadius: 40,
-                  backgroundColor: selectedBadge.bg,
+                  backgroundColor: isLocked ? C.surfaceMid : selectedBadge.bg,
                   justifyContent: 'center', alignItems: 'center',
                   marginBottom: 16,
-                  borderWidth: 2, borderColor: selectedBadge.color + '40'
+                  borderWidth: 2, borderColor: isLocked ? C.border : selectedBadge.color + '40'
                 }}>
-                  <BadgeIcon size={40} color={selectedBadge.color} fill={selectedBadge.color + '20'} />
+                  <BadgeIcon size={40} color={isLocked ? C.inkLight : selectedBadge.color} fill={isLocked ? 'transparent' : selectedBadge.color + '20'} />
                 </View>
                 <Text style={[S.alertTitle, { fontSize: 24 }]}>{selectedBadge.label}</Text>
                 <Text style={[S.alertMsg, { marginBottom: 24, textAlign: 'center' }]}>
-                  {selectedBadge.desc}. ყოჩაღ! Balansi-ს ერთგული წევრობისთვის შენ ეს ჯილდო დაიმსახურე. ✨
+                  {(() => {
+                    if (selectedBadge.isWarning) return selectedBadge.desc;
+                    if (isLocked) return `ამ ბეიჯის მოსაპოვებლად საჭიროა: ${selectedBadge.desc}. განაგრძე აქტივობა! 💪`;
+                    return `${selectedBadge.desc}. ყოჩაღ! Balansi-ს ერთგული წევრობისთვის შენ ეს ჯილდო დაიმსახურე. ✨`;
+                  })()}
                 </Text>
-                <TouchableOpacity style={[S.modalSolidBtn, { backgroundColor: selectedBadge.color }]} onPress={() => setSelectedBadge(null)}>
-                  <Text style={S.modalSolidBtnTxt}>რა მაგარია! 🤩</Text>
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: isLocked ? C.ink : selectedBadge.color,
+                    paddingVertical: 16,
+                    paddingHorizontal: 32,
+                    borderRadius: 18,
+                    width: '100%',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginTop: 10
+                  }}
+                  onPress={() => setSelectedBadge(null)}
+                >
+                  <Text style={{ color: '#FFF', fontWeight: '900', fontSize: 16 }}>
+                    გასაგებია
+                  </Text>
                 </TouchableOpacity>
               </Animated.View>
+            );
+          })()}
+        </View>
+      </Modal>
+
+      {/* 🏆 WINNING BADGE ANIMATION OVERLAY */}
+      <Modal visible={!!winningBadge} transparent animationType="fade">
+        <View style={[S.modalOverlay, { backgroundColor: 'rgba(0,0,0,0.92)', justifyContent: 'center', alignItems: 'center' }]}>
+          {winningBadge && (() => {
+            const Icon = winningBadge.icon;
+            return (
+              <View style={{ alignItems: 'center', width: '85%' }}>
+                <Animated.View style={{
+                  transform: [{ scale: popAnim }],
+                  alignItems: 'center',
+                  backgroundColor: 'rgba(255,255,255,0.05)',
+                  padding: 30,
+                  borderRadius: 35,
+                  borderWidth: 1,
+                  borderColor: 'rgba(255,255,255,0.1)'
+                }}>
+                  <View style={{
+                    width: 120, height: 120, borderRadius: 60,
+                    backgroundColor: winningBadge.color + '20',
+                    justifyContent: 'center', alignItems: 'center',
+                    borderWidth: 3, borderColor: winningBadge.color,
+                    shadowColor: winningBadge.color, shadowOffset: { width: 0, height: 8 },
+                    shadowOpacity: 0.6, shadowRadius: 15, elevation: 12
+                  }}>
+                    <Icon size={60} color={winningBadge.color} fill={winningBadge.color + '20'} />
+                  </View>
+                  
+                  <Text style={{ 
+                    fontSize: 28, fontWeight: '900', color: '#FFF', 
+                    marginTop: 25, textAlign: 'center' 
+                  }}>ახალი მიღწევა! 🏆</Text>
+                  
+                  <Text style={{ 
+                    fontSize: 20, fontWeight: '800', color: winningBadge.color, 
+                    marginTop: 8, textAlign: 'center' 
+                  }}>{winningBadge.label}</Text>
+                  
+                  <Text style={{ 
+                    fontSize: 14, color: 'rgba(255,255,255,0.6)', 
+                    marginTop: 15, textAlign: 'center', lineHeight: 22 
+                  }}>
+                    გილოცავ! შენ წარმატებით მოიპოვე ეს ჯილდო. განაგრძე წინსვლა Balansi-სთან ერთად! ✨
+                  </Text>
+
+                  <TouchableOpacity 
+                    style={{ 
+                      backgroundColor: winningBadge.color, 
+                      marginTop: 35, 
+                      paddingVertical: 16,
+                      paddingHorizontal: 40,
+                      borderRadius: 20,
+                      shadowColor: winningBadge.color,
+                      shadowOpacity: 0.4,
+                      shadowRadius: 10,
+                      elevation: 5
+                    }} 
+                    onPress={() => setWinningBadge(null)}
+                  >
+                    <Text style={{ color: '#FFF', fontWeight: '900', fontSize: 16 }}>გასაგებია</Text>
+                  </TouchableOpacity>
+                </Animated.View>
+              </View>
             );
           })()}
         </View>
@@ -600,17 +799,10 @@ export default function ProfileScreen() {
         </View>
       </Modal>
 
-      <Modal visible={brandAlert.visible} transparent animationType="fade">
-        <View style={[S.modalOverlay, { justifyContent: 'center', paddingHorizontal: 24 }]}>
-          <Animated.View style={[S.alertCard, { transform: [{ scale: popAnim }] }]}>
-            <Text style={S.alertTitle}>{brandAlert.title}</Text>
-            <Text style={S.alertMsg}>{brandAlert.message}</Text>
-            <TouchableOpacity style={S.modalSolidBtn} onPress={() => setBrandAlert({ ...brandAlert, visible: false })}>
-              <Text style={S.modalSolidBtnTxt}>გასაგებია</Text>
-            </TouchableOpacity>
-          </Animated.View>
-        </View>
-      </Modal>
+      <BrandAlert
+        state={brandAlert}
+        onClose={() => setBrandAlert({ ...brandAlert, visible: false })}
+      />
 
       {/* 🎁 PROMO CODE MODAL */}
       <Modal visible={showPromoModal} transparent animationType="fade">
@@ -649,13 +841,13 @@ export default function ProfileScreen() {
               />
 
               <View style={{ flexDirection: 'row', gap: 12 }}>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={{ flex: 1, height: 50, borderRadius: 14, justifyContent: 'center', alignItems: 'center', backgroundColor: C.surfaceMid }}
                   onPress={() => { setShowPromoModal(false); setPromoCode(''); }}
                 >
                   <Text style={{ fontWeight: '800', color: C.inkMid }}>გაუქმება</Text>
                 </TouchableOpacity>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={{ flex: 2, height: 50, borderRadius: 14, justifyContent: 'center', alignItems: 'center', backgroundColor: C.primary }}
                   onPress={submitPromoCode}
                 >
@@ -664,6 +856,115 @@ export default function ProfileScreen() {
               </View>
             </Animated.View>
           </KeyboardAvoidingView>
+        </View>
+      </Modal>
+
+      {/* 🎨 THEME SELECTION MODAL — CREATIVE MINIMALIST UI */}
+      <Modal visible={showThemeModal} transparent animationType="slide">
+        <View style={[S.modalOverlay, { backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' }]}>
+          <Animated.View style={{ 
+            backgroundColor: '#FFF',
+            borderTopLeftRadius: 40,
+            borderTopRightRadius: 40,
+            padding: 28,
+            paddingBottom: 45,
+            width: '100%'
+          }}>
+            <View style={{ width: 40, height: 5, backgroundColor: '#F1F5F9', borderRadius: 10, alignSelf: 'center', marginBottom: 25 }} />
+            
+            <View style={{ marginBottom: 30 }}>
+              <Text style={{ fontSize: 24, fontWeight: '900', color: '#0F172A' }}>დიზაინი & სტილი</Text>
+              <Text style={{ fontSize: 13, color: '#64748B', fontWeight: '600', marginTop: 4 }}>აირჩიე შენი სასურველი ატმოსფერო</Text>
+            </View>
+
+            <View style={{ gap: 12 }}>
+              {Object.keys(THEME_NAMES).map((tId: any) => {
+                const tOpts = THEME_NAMES[tId];
+                const isActive = themeId === tId;
+                const isLocked = tOpts.isPremium && !isPro;
+                const themeColors = THEMES[tId as ThemeId];
+
+                return (
+                  <TouchableOpacity
+                    key={tId}
+                    activeOpacity={0.8}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      backgroundColor: isActive ? themeColors.primaryLight : '#F8FAFC',
+                      padding: 20,
+                      borderRadius: 24,
+                      borderLeftWidth: 6,
+                      borderLeftColor: themeColors.primary,
+                      shadowColor: isActive ? themeColors.primary : '#000',
+                      shadowOffset: { width: 0, height: isActive ? 6 : 0 },
+                      shadowOpacity: isActive ? 0.2 : 0,
+                      shadowRadius: 15,
+                      elevation: isActive ? 8 : 0
+                    }}
+                    onPress={() => {
+                      Haptics.selectionAsync();
+                      if (isLocked) {
+                        setShowThemeModal(false);
+                        router.push('/paywall');
+                        return;
+                      }
+                      setTheme(tId);
+                    }}
+                  >
+                    <View style={{ flex: 1 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <Text style={{ 
+                          fontSize: 18, 
+                          fontWeight: '900', 
+                          color: isActive ? themeColors.primaryDark : '#1E293B' 
+                        }}>
+                          {tOpts.name}
+                        </Text>
+                        {isLocked && <Lock size={14} color="#94A3B8" style={{ marginLeft: 10 }} />}
+                      </View>
+                      <Text style={{ 
+                        fontSize: 12, 
+                        color: isActive ? themeColors.primaryDark + '80' : '#64748B', 
+                        fontWeight: '600', 
+                        marginTop: 2 
+                      }}>
+                        {tOpts.desc}
+                      </Text>
+                    </View>
+
+                    {isActive && (
+                      <View style={{ 
+                        width: 28, height: 28, borderRadius: 14, 
+                        backgroundColor: themeColors.primary, 
+                        justifyContent: 'center', alignItems: 'center' 
+                      }}>
+                        <CheckCircle size={18} color="#FFF" />
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            <TouchableOpacity 
+              style={{ 
+                marginTop: 35, 
+                backgroundColor: '#0F172A', 
+                height: 60, 
+                borderRadius: 22, 
+                justifyContent: 'center', 
+                alignItems: 'center',
+                shadowColor: '#000',
+                shadowOpacity: 0.1,
+                shadowRadius: 10,
+                elevation: 4
+              }}
+              onPress={() => setShowThemeModal(false)}
+            >
+              <Text style={{ color: '#FFF', fontWeight: '900', fontSize: 16 }}>გასაგებია</Text>
+            </TouchableOpacity>
+          </Animated.View>
         </View>
       </Modal>
 

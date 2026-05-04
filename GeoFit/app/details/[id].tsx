@@ -8,6 +8,7 @@ import {
 import { Image } from 'expo-image';
 import * as Haptics from 'expo-haptics';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { BrandAlert, BAlertState } from '../../components/ui/BrandAlert';
 import { useThemeStore } from '../../store/useThemeStore';
 import { useDiaryStore } from '../../store/useDiaryStore';
 import { useCartStore } from '../../store/useCartStore';
@@ -61,70 +62,7 @@ const Tap = ({ children, onPress, style, scale = 0.95 }: any) => {
   );
 };
 
-// ─── Alert Modal ──────────────────────────────────────────────────────────────
-type AlertType = 'success' | 'error' | 'warning' | 'info';
-interface AlertAction { label: string; onPress: () => void; primary?: boolean; }
-interface BAlertState { visible: boolean; type: AlertType; title: string; message: string; actions?: AlertAction[]; }
-
-const BrandAlert = ({ state, onClose, DS, AL }: { state: BAlertState; onClose: () => void; DS: any; AL: any }) => {
-  const slideY = useRef(new Animated.Value(60)).current;
-  const op = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    if (state.visible) {
-      Animated.parallel([
-        Animated.spring(slideY, { toValue: 0, tension: 65, friction: 11, useNativeDriver: Platform.OS !== 'web' }),
-        Animated.timing(op, { toValue: 1, duration: 220, useNativeDriver: Platform.OS !== 'web' }),
-      ]).start();
-    } else {
-      slideY.setValue(60); op.setValue(0);
-    }
-  }, [state.visible, slideY, op]);
-
-  const map = {
-    success: { color: DS.success, glow: DS.successGlow, emoji: '🎉' },
-    error: { color: DS.danger, glow: DS.dangerGlow, emoji: '😕' },
-    warning: { color: DS.warning, glow: DS.warningGlow, emoji: '⚡' },
-    info: { color: DS.info, glow: DS.infoGlow, emoji: 'ℹ️' },
-  };
-  const m = map[state.type];
-
-  return (
-    <Modal visible={state.visible} transparent animationType="none" statusBarTranslucent>
-      <Animated.View style={[AL.overlay, { opacity: op }]}>
-        <Animated.View style={[AL.sheet, { transform: [{ translateY: slideY }] }]}>
-          <View style={[AL.accent, { backgroundColor: m.color }]} />
-          <View style={[AL.circle, { backgroundColor: m.glow }]}>
-            <Text style={{ fontSize: 32 }}>{m.emoji}</Text>
-          </View>
-          <Text style={AL.title}>{state.title}</Text>
-          <Text style={AL.msg}>{state.message}</Text>
-          <View style={AL.row}>
-            {state.actions
-              ? state.actions.map((a, i) => (
-                <View key={`action-${i}`} style={{ flex: 1 }}>
-                  <Tap onPress={() => { onClose(); a.onPress(); }} style={{ width: '100%' }}>
-                    <View style={[AL.btn, a.primary ? { backgroundColor: m.color } : AL.ghost]}>
-                      <Text style={[AL.btnTxt, !a.primary && { color: DS.slate }]}>{a.label}</Text>
-                    </View>
-                  </Tap>
-                </View>
-              ))
-              : (
-                <View style={{ flex: 1 }}>
-                  <Tap onPress={onClose} style={{ width: '100%' }}>
-                    <View style={[AL.btn, { backgroundColor: m.color }]}>
-                      <Text style={AL.btnTxt}>გასაგებია</Text>
-                    </View>
-                  </Tap>
-                </View>
-              )}
-          </View>
-        </Animated.View>
-      </Animated.View>
-    </Modal>
-  );
-};
+// (Unified BrandAlert used below)
 
 const getALStyles = (DS: any) => StyleSheet.create({
   overlay: { flex: 1, backgroundColor: 'rgba(10,15,13,0.65)', justifyContent: 'flex-end', padding: DS.s20 },
@@ -813,7 +751,10 @@ export default function RecipeDetailsScreen() {
         </View>
       </Modal>
 
-      <BrandAlert state={alertS} onClose={closeAlert} DS={DS} AL={AL} />
+      <BrandAlert 
+        state={alertS} 
+        onClose={closeAlert} 
+      />
     </View>
   );
 }

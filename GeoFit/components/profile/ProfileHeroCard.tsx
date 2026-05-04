@@ -299,6 +299,7 @@ const styles = StyleSheet.create({
   topRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginTop: 10,
     marginBottom: 4,
     minHeight: 32,
   },
